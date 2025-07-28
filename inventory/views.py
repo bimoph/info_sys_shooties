@@ -46,16 +46,16 @@ def add_stock(request):
 
 
 
-def ingredient_list(request):
-    ingredients = Ingredient.objects.all()
-    return render(request, 'inventory/ingredient_list.html', {'ingredients': ingredients})
+# def ingredient_list(request):
+#     ingredients = Ingredient.objects.all()
+#     return render(request, 'inventory/ingredient_list.html', {'ingredients': ingredients})
 
 def ingredient_create(request):
     if request.method == 'POST':
         form = IngredientForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('ingredient_list')
+            return redirect('inventory_dashboard')
     else:
         form = IngredientForm()
     return render(request, 'inventory/ingredient_form.html', {'form': form, 'title': 'Add Ingredient'})
@@ -66,7 +66,7 @@ def ingredient_update(request, pk):
         form = IngredientForm(request.POST, instance=ingredient)
         if form.is_valid():
             form.save()
-            return redirect('ingredient_list')
+            return redirect('inventory_dashboard')
     else:
         form = IngredientForm(instance=ingredient)
     return render(request, 'inventory/ingredient_form.html', {'form': form, 'title': 'Edit Ingredient'})
@@ -75,7 +75,7 @@ def ingredient_delete(request, pk):
     ingredient = get_object_or_404(Ingredient, pk=pk)
     if request.method == 'POST':
         ingredient.delete()
-        return redirect('ingredient_list')
+        return redirect('inventory_dashboard')
     return render(request, 'inventory/ingredient_confirm_delete.html', {'ingredient': ingredient})
 
 
@@ -226,4 +226,32 @@ def add_smoothie_ingredient(request, pk):
     return render(request, 'inventory/smoothie_ingredient_form.html', {
         'form': form,
         'smoothie': smoothie
+    })
+
+def edit_smoothie_ingredient(request, pk):
+    ingredient = get_object_or_404(SmoothieIngredient, pk=pk)
+    if request.method == 'POST':
+        form = SmoothieIngredientForm(request.POST, instance=ingredient)
+        if form.is_valid():
+            form.save()
+            return redirect('smoothie_detail', pk=ingredient.smoothie.pk)
+    else:
+        form = SmoothieIngredientForm(instance=ingredient)
+
+    return render(request, 'inventory/smoothie_ingredient_form.html', {
+        'form': form,
+        'smoothie': ingredient.smoothie,
+        'edit': True
+    })
+
+def delete_smoothie_ingredient(request, pk):
+    ingredient = get_object_or_404(SmoothieIngredient, pk=pk)
+    smoothie_pk = ingredient.smoothie.pk
+    if request.method == 'POST':
+        ingredient.delete()
+        messages.success(request, 'Ingredient deleted successfully.')
+        return redirect('smoothie_detail', pk=smoothie_pk)
+
+    return render(request, 'inventory/smoothie_ingredient_confirm_delete.html', {
+        'ingredient': ingredient,
     })

@@ -8,7 +8,7 @@ urlpatterns = [
 
 
     # ingredient URLs
-    path('ingredients/', views.ingredient_list, name='ingredient_list'),
+    # path('ingredients/', views.ingredient_list, name='ingredient_list'),
     path('ingredients/add/', views.ingredient_create, name='ingredient_create'),
     path('ingredients/<int:pk>/edit/', views.ingredient_update, name='ingredient_update'),
     path('ingredients/<int:pk>/delete/', views.ingredient_delete, name='ingredient_delete'),
@@ -26,6 +26,16 @@ urlpatterns = [
     path('smoothies/<int:pk>/detail/', views.smoothie_detail, name='smoothie_detail'),
 
     path('smoothies/<int:pk>/add-ingredient/', views.add_smoothie_ingredient, name='add_smoothie_ingredient'),
+    path(
+        'smoothies/ingredients/<int:pk>/edit/',
+        views.edit_smoothie_ingredient,
+        name='edit_smoothie_ingredient'
+    ),
+    path(
+    'smoothies/ingredients/<int:pk>/delete/',
+    views.delete_smoothie_ingredient,
+    name='delete_smoothie_ingredient'
+),
 
 
 ]

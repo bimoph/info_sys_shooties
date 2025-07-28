@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete?</title>
+</head>
+<body>
+    <div class="container mt-4">
+    <h2>Delete Ingredient</h2>
+    <p>Are you sure you want to delete <strong>{{ ingredient.ingredient.name }}</strong> from <strong>{{ ingredient.smoothie.name }}</strong>?</p>
+    
+    <form method="post">
+      {% csrf_token %}
+      <a href="{% url 'smoothie_detail' ingredient.smoothie.pk %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-danger">Yes, delete</button>
+    </form>
+  </div>
+</body>
+</html>
