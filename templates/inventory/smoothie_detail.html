@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load humanize %}
+    <meta charset="UTF-8">
+    <title>Smoothie Detail</title>
+    <style>
+        body { font-family: Arial; margin: 40px; background-color: #f8f8f8; }
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; }
+        th { background-color: #f0f0f0; }
+        .btn { padding: 6px 12px; text-decoration: none; border-radius: 4px; margin-right: 5px; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Edit Smoothie Menu</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+
+        <h3 style="margin-top: 40px;">Ingredients</h3>
+        <table>
+            <tr>
+                <th>Ingredient</th>
+                <th>Amount</th>
+                <th>Actions</th>
+            </tr>
+            {% for item in ingredients %}
+            <tr>
+                <td>{{ item.ingredient.name }}</td>
+                <td>{{ item.amount }}</td>
+                <td>
+                    <a href="{% url 'edit_smoothie_ingredient' item.id %}" class="btn btn-primary">Edit</a>
+                    <a href="{% url 'delete_smoothie_ingredient' item.id %}" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3">No ingredients found.</td></tr>
+            {% endfor %}
+        </table>
+
+        <a href="{% url 'add_smoothie_ingredient' smoothie.pk %}" class="btn btn-primary">➕ Add Ingredient</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ingredients</title>
+</head>
+<body>
+    <h2>Ingredients</h2>
+    <a href="{% url 'ingredient_create' %}">➕ Add New Ingredient</a>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Unit</th>
+            <th>Stock</th>
+            <th>Threshold</th>
+            <th>Actions</th>
+        </tr>
+        {% for ingredient in ingredients %}
+        <tr>
+            <td>{{ ingredient.name }}</td>
+            <td>{{ ingredient.unit }}</td>
+            <td>{{ ingredient.quantity_in_stock }}</td>
+            <td>{{ ingredient.low_stock_threshold }}</td>
+            <td>
+                <a href="{% url 'ingredient_update' ingredient.pk %}">Edit</a> |
+                <a href="{% url 'ingredient_delete' ingredient.pk %}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</body>
+</html>

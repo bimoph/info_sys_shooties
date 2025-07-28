@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load humanize %}
+
+    <meta charset="UTF-8">
+    <title>Smoothie Menu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #eee;
+        }
+        a.button {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smoothie Menu</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+        {% for smoothie in smoothies %}
+        <tr>
+            <td>{{ smoothie.name }}</td>
+            <td>Rp{{ smoothie.price|floatformat:2|intcomma }}</td>
+
+            <td>
+                <a href="{% url 'smoothie_detail' smoothie.pk %}">Detail</a> |
+
+                <a href="{% url 'smoothie_menu_delete' smoothie.pk %}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'create_smoothie_menu' %}" class="button">➕ Add Smoothie</a>
+</body>
+</html>

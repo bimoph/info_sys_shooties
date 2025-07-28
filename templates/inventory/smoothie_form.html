@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% if edit %}Edit{% else %}Create{% endif %} Smoothie</title>
+</head>
+<body>
+    <h1>{% if edit %}Edit{% else %}Create{% endif %} Smoothie</h1>
+    <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <h3>Ingredients</h3>
+    <table id="ingredient-formset">
+        {{ formset.management_form }}
+        {% for form in formset %}
+        <tr class="form-row">
+            <td>{{ form.ingredient }}</td>
+            <td>{{ form.amount }}</td>
+            <td>
+            {% if form.instance.pk %}
+                <input type="checkbox" name="{{ form.prefix }}-DELETE"> Delete
+            {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <button type="button" id="add-row">+ Add Ingredient</button>
+    <button type="submit">Save</button>
+    </form>
+    <a href="{% url 'smoothie_menu_list' %}">← Back to Smoothie List</a>
+</body>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const addBtn = document.getElementById('add-row');
+    const formset = document.getElementById('ingredient-formset');
+    let totalForms = document.getElementById('id_smoothieingredient_set-TOTAL_FORMS');
+
+    addBtn.addEventListener('click', function () {
+        const currentFormCount = parseInt(totalForms.value);
+        const emptyForm = document.querySelectorAll('.form-row')[0].cloneNode(true);
+
+        // Clear values
+        emptyForm.querySelectorAll('input, select').forEach(input => {
+            if (input.name.includes('DELETE')) {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+
+            // Update name and id with new form index
+            if (input.name) {
+                input.name = input.name.replace(/-\d+-/, `-${currentFormCount}-`);
+            }
+            if (input.id) {
+                input.id = input.id.replace(/-\d+-/, `-${currentFormCount}-`);
+            }
+        });
+
+        formset.appendChild(emptyForm);
+        totalForms.value = currentFormCount + 1;
+    });
+});
+</script>
+</html>

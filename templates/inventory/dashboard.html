@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #eee;
+        }
+        .low-stock {
+            background-color: #ffcccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Inventory Items</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Unit</th>
+            <th>Stock</th>
+            <th>Threshold</th>
+            <th>Actions</th>
+        </tr>
+        {% for ingredient in ingredients %}
+        <tr>
+            <td>{{ ingredient.name }}</td>
+            <td>{{ ingredient.unit }}</td>
+            <td>{{ ingredient.quantity_in_stock }}</td>
+            <td>{{ ingredient.low_stock_threshold }}</td>
+            <td>
+                <a href="{% url 'ingredient_update' ingredient.pk %}">Edit</a> |
+                <a href="{% url 'ingredient_delete' ingredient.pk %}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'ingredient_create' %}" style="display:inline-block; margin-top:10px; padding:8px 12px; background-color:#007bff; color:white; text-decoration:none; border-radius:4px;">➕ Add New Ingredient</a>
+    <a href="{% url 'add_stock' %}" style="display:inline-block; margin-top:10px; padding:8px 12px; background-color:#007bff; color:white; text-decoration:none; border-radius:4px;">➕ Add Stock</a>
+
+</body>
+</html>

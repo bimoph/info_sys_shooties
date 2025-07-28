@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Entry List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #eee;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Entries</h1>
+    <a href="?export=true" class="btn">📤 Export as CSV</a>
+    <table>
+        <tr>
+            <th>Timestamp</th>
+            <th>Ingredient</th>
+            <th>Quantity</th>
+            <th>Unit</th>
+            <th>Reason</th>
+        </tr>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>{{ entry.ingredient.name }}</td>
+            <td>{{ entry.quantity }}</td>
+            <td>{{ entry.ingredient.unit }}</td>
+            <td>{{ entry.get_reason_display }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

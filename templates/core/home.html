@@ -1,0 +1,23 @@
+<h1>Welcome, {{ role|title }}!</h1>
+
+<ul>
+  {% if role == 'admin' or role == 'manager' %}
+    <li><a href="#">Inventory Management</a></li>
+  {% endif %}
+
+  <li><a href="#">Sales Module</a></li>
+
+  {% if role == 'admin' or role == 'manager' %}
+    <li><a href="#">Customer Management</a></li>
+  {% endif %}
+
+  {% if role == 'admin' %}
+    <li><a href="#">Employee & Payroll</a></li>
+    <li><a href="#">Analytics</a></li>
+  {% endif %}
+</ul>
+
+<form method="post" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit">Logout</button>
+</form>
