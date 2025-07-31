@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Order</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background-color: #f7f9fc;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            margin: auto;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            background-color: #fafafa;
+        }
+
+        .menu-label {
+            flex-grow: 1;
+            font-size: 15px;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quantity-control button {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .quantity-control input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 30px;
+        }
+
+        .footer-form {
+            margin-top: 20px;
+        }
+
+        .footer-form span {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+
+        button[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 25px;
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Create New Order</h1>
+<form method="post">
+    {% csrf_token %}
+    {% load currency_filters %}
+    
+    <label for="id_name">Name:</label>
+    {{ form.name }}
+
+    <label for="id_phone_number">Phone Number:</label>
+    {{ form.phone_number }}
+
+    <label>Smoothie Menu (with quantity):</label>
+    {% for smoothie in smoothies %}
+        <div class="menu-item">
+            <div class="menu-label">{{ smoothie.name }} ({{ smoothie.price|rupiah }})</div>
+            <div class="quantity-control">
+                <button type="button" class="decrease-btn">−</button>
+                <input
+                    type="number"
+                    name="smoothie_{{ smoothie.id }}"
+                    data-price="{{ smoothie.price }}"
+                    min="0"
+                    value="0"
+                    class="smoothie-qty"
+                >
+                <button type="button" class="increase-btn">+</button>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="footer-form">
+        <label>Total Price: <span id="total_price_display">Rp 0</span></label>
+        <input type="hidden" name="total_price" id="total_price_hidden">
+    </div>
+
+    <div class="footer-form">
+        <label for="id_payment_method">Payment Method:</label>
+        {{ form.payment_method }}
+    </div>
+
+    <button type="submit">Create Order</button>
+</form>
+
+<a href="{% url 'view_order' %}">← Back to Order List</a>
+
+<script>
+    const qtyInputs = document.querySelectorAll('.smoothie-qty');
+    const totalPriceDisplay = document.getElementById('total_price_display');
+    const totalPriceHidden = document.getElementById('total_price_hidden');
+    const increaseBtns = document.querySelectorAll('.increase-btn');
+    const decreaseBtns = document.querySelectorAll('.decrease-btn');
+
+    function formatRupiah(number) {
+        return 'Rp ' + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        qtyInputs.forEach(input => {
+            const price = parseInt(input.dataset.price);
+            const quantity = parseInt(input.value) || 0;
+            total += price * quantity;
+        });
+        totalPriceDisplay.textContent = formatRupiah(total);
+        totalPriceHidden.value = total;
+    }
+
+    qtyInputs.forEach(input => {
+        input.addEventListener('input', calculateTotal);
+    });
+
+    increaseBtns.forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+            qtyInputs[index].value = parseInt(qtyInputs[index].value) + 1;
+            calculateTotal();
+        });
+    });
+
+    decreaseBtns.forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+            qtyInputs[index].value = Math.max(0, parseInt(qtyInputs[index].value) - 1);
+            calculateTotal();
+        });
+    });
+
+    calculateTotal(); // Initial call
+</script>
+
+</body>
+</html>
