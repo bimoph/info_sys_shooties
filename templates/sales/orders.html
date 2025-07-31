@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Orders</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border-bottom: 1px solid #ddd;
+            padding: 12px 16px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #fafafa;
+            font-weight: bold;
+        }
+        ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .action-buttons {
+            margin-top: 30px;
+        }
+        .action-buttons a {
+            display: inline-block;
+            padding: 10px 16px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+        .action-buttons a:hover {
+            background-color: #28a74684;
+        }
+        .served {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+        .checkbox-cell {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    {% load currency_filters %}
+    <h1>All Orders</h1>
+    <h3>Pending Orders</h3>
+    <table>
+        {% include "sales/partials/order_table.html" with orders=pending_orders table_type="pending" %}
+    </table>
+
+    <h3>Ready Orders</h3>
+    <table>
+        {% include "sales/partials/order_table.html" with orders=ready_orders table_type="ready" %}
+    </table>
+
+    <h3>Served Orders</h3>
+    <table>
+        {% include "sales/partials/order_table.html" with orders=served_orders table_type="served" %}
+    </table>
+
+
+
+    <div class="action-buttons">
+        <a href="{% url 'create_order' %}">➕ Create New Order</a>
+    </div>
+    <script>
+        function attachCheckboxEvents() {
+            document.querySelectorAll('.ready-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', async function () {
+                    const row = this.closest('tr');
+                    const orderId = row.dataset.orderId;
+                    const response = await fetch(`/sales/toggle-ready/${orderId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        },
+                        body: '{}'
+                    });
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert("Failed to update ready status.");
+                        this.checked = !this.checked;
+                    }
+                });
+            });
+    
+            document.querySelectorAll('.served-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', async function () {
+                    const row = this.closest('tr');
+                    const orderId = row.dataset.orderId;
+                    const response = await fetch(`/sales/toggle-served/${orderId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        },
+                        body: '{}'
+                    });
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert("Failed to update served status.");
+                        this.checked = !this.checked;
+                    }
+                });
+            });
+        }
+    
+        document.addEventListener('DOMContentLoaded', attachCheckboxEvents);
+    </script>
+    
+</body>
+</html>
