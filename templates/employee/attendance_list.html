@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance List</title>
+</head>
+<body>
+    <div class="container mt-4">
+    <h2>Attendance Records</h2>
+    <a href="{% url 'check_in' %}" class="btn btn-primary mb-3">Check In</a>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Hours Worked</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.employee.name }}</td>
+            <td>{{ record.check_in }}</td>
+            <td>{{ record.check_out|default:"-" }}</td>
+            <td>{{ record.hours_worked }} hours</td>
+            <td>
+                {% if not record.check_out %}
+                    <a href="{% url 'check_out' record.id %}" class="btn btn-success btn-sm">Check Out</a>
+                {% endif %}
+                <a href="{% url 'attendance_detail' record.id %}" class="btn btn-info btn-sm">Detail</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</body>
+</html>

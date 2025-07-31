@@ -8,11 +8,11 @@
   <li><a href="#">Sales Module</a></li>
 
   {% if role == 'admin' or role == 'manager' %}
-    <li><a href="#">Customer Management</a></li>
+    <li><a href="/customers">Customer Management</a></li>
   {% endif %}
 
   {% if role == 'admin' %}
-    <li><a href="#">Employee & Payroll</a></li>
+    <li><a href="/employee">Employee & Payroll</a></li>
     <li><a href="#">Analytics</a></li>
   {% endif %}
 </ul>

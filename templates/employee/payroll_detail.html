@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll Detail</title>
+</head>
+<body>
+    <div class="container mt-4">
+  <h2>Payroll History for {{ employee.name }}</h2>
+  <p><strong>Current Balance:</strong> Rp{{ employee.current_balance|floatformat:0 }}</p>
+
+  {% if payrolls %}
+    <table class="table table-bordered mt-3">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Period Start</th>
+          <th>Period End</th>
+          <th>Total Paid</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payroll in payrolls %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ payroll.period_start }}</td>
+          <td>{{ payroll.period_end }}</td>
+          <td>Rp{{ payroll.total_paid|floatformat:0 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="mt-3">No payroll records found.</p>
+  {% endif %}
+</div>
+</body>
+</html>

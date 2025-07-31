@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Out</title>
+</head>
+<body>
+<div class="container mt-4">
+  <h2>Check Out</h2>
+  <p><strong>Employee:</strong> {{ attendance.employee.name }}</p>
+  <p><strong>Check-In Time:</strong> {{ attendance.check_in }}</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="id_check_out_photo">Take Photo (Check-Out):</label>
+      <!-- <input type="file" name="check_out_photo" accept="image/*" capture="environment" required class="form-control" id="id_check_out_photo"> -->
+      <input type="file" name="check_out_photo" accept="image/*" capture="user" required class="form-control" id="id_check_out_photo">
+    </div>
+    <button class="btn btn-danger">Check Out</button>
+    <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Back</a>
+  </form>
+</div>
+</body>
+</html>

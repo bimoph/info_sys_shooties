@@ -1,0 +1,69 @@
+{% load tz %}
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Detail</title>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Attendance Detail</h2>
+        <table class="table table-bordered">
+            <tr>
+                <th>Employee</th>
+                <td>{{ attendance.employee.name }}</td>
+            </tr>
+            <tr>
+                <th>Check In</th>
+                <td>{{ attendance.check_in }}</td>
+            </tr>
+            <tr>
+                <th>Check Out</th>
+                <td>{{ attendance.check_out|default:"-" }}</td>
+            </tr>
+            <tr>
+                <th>Check In Photo</th>
+                <td>
+                    {% if attendance.check_in_photo %}
+                        <img src="{{ attendance.check_in_photo.url }}" alt="Check In Photo" width="200">
+                    {% else %}
+                        No photo
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Check Out Photo</th>
+                <td>
+                    {% if attendance.check_out_photo %}
+                        <img src="{{ attendance.check_out_photo.url }}" alt="Check Out Photo" width="200">
+                    {% else %}
+                        No photo
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Hours Worked</th>
+                <td>
+                    {% if attendance.check_out %}
+                        {{ attendance.check_out|timesince:attendance.check_in }}
+                    {% else %}
+                        {{ now|timesince:attendance.check_in }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Salary Earned</th>
+                <td>
+                    {% if attendance.check_out %}
+                        Rp{{ attendance.salary_earned|intcomma }}
+                    {% else %}
+                        Not calculated yet
+                    {% endif %}
+            </tr>
+        </table>
+        <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Back</a>
+    </div>
+</body>
+</html>

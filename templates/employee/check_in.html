@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check In</title>
+</head>
+<body>
+<div class="container mt-4">
+  <h2>Check In</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="employee">Employee:</label>
+      {{ form.employee }}
+    </div>
+    <div class="mb-3">
+      <label for="id_check_in_photo">Take Photo (Check-In):</label>
+      <input type="file" name="check_in_photo" accept="image/*" capture="user" required>
+    </div>
+    <button class="btn btn-primary">Submit</button>
+    <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Back</a>
+  </form>
+</div>
+</body>
+</html>

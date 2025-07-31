@@ -1,0 +1,44 @@
+{% load humanize %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll - Home</title>
+</head>
+<body>
+    <h1>Payroll Dashboard</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Employee</th>
+      <th>Balance</th>
+      <th>Period</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in employee_data %}
+      <tr>
+        <td>{{ item.employee.name }}</td>
+        <td>Rp {{ item.current_balance|intcomma }}</td>
+        <td>
+          {% if item.period_start and item.period_end %}
+            {{ item.period_start }} to {{ item.period_end }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'employee_earned_summary' item.employee.id %}">View & Pay</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+</body>
+</html>

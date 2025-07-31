@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete?</title>
+</head>
+<body>
+    <div class="container mt-4">
+    <h2>Delete Customer</h2>
+    <p>Are you sure you want to delete {{ customer.name }}?</p>
+    <form method="post">
+      {% csrf_token %}
+      <a href="{% url 'customer_list' %}" class="btn btn-secondary">Cancel</a>
+      <button class="btn btn-danger">Yes, delete</button>
+    </form>
+  </div>
+</body>
+</html>

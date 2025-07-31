@@ -1,0 +1,39 @@
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll Summary</title>
+</head>
+<body>
+    {% for summary in summaries %}
+  <h3>{{ summary.employee.name }}</h3>
+  <p><strong>Total Earned:</strong> Rp{{ summary.total_earned }}</p>
+  <a href="{% url 'do_payroll' summary.employee.id %}" class="btn btn-success">Pay</a>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Check In</th>
+        <th>Check Out</th>
+        <th>Earned</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for att in summary.attendance_details %}
+        <tr>
+          <td>{{ att.date }}</td>
+          <td>{{ att.check_in }}</td>
+          <td>{{ att.check_out }}</td>
+          <td>Rp{{ att.earned }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endfor %}
+
+</body>
+</html>

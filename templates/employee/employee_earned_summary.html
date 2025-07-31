@@ -1,0 +1,59 @@
+{% load humanize %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Earned Summary</title>
+</head>
+<body>
+    <h2>{{ employee.name }} – Payroll Summary</h2>
+
+
+<p><strong>Period:</strong>
+  {% if period_start and period_end %}
+    {{ period_start }} to {{ period_end }}
+  {% else %}
+    -
+  {% endif %}
+</p>
+
+<p><strong>Total Earned:</strong> Rp {{ total_salary|intcomma }}</p>
+
+<h3>Attendances</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Check-in</th>
+      <th>Check-out</th>
+      <th>Earned</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for att in attendances %}
+      <tr>
+        <td>{{ att.check_in.date }}</td>
+        <td>{{ att.check_in.time }}</td>
+        <td>{{ att.check_out.time }}</td>
+        <td>Rp {{ att.salary_earned|intcomma }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if can_payroll %}
+  <form action="{% url 'create_payroll_from_summary' employee.id %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="start_date" value="{{ period_start|date:'Y-m-d' }}">
+    <input type="hidden" name="end_date" value="{{ period_end|date:'Y-m-d' }}">
+    <button type="submit" class="btn btn-success">Pay Now</button>
+    </form>
+{% else %}
+  <p>No payroll to generate yet.</p>
+{% endif %}
+
+</body>
+</html>
