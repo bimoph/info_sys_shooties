@@ -8,4 +8,11 @@ urlpatterns = [
     path('<int:pk>/delete/', views.delete_customer, name='delete_customer'),
     path('<int:pk>/edit/', views.edit_customer, name='edit_customer'),  
 
+    path('spending/', views.customer_spending_report, name='customer_spending_report'),
+
+    # ajaxxxx
+    path('check-phone/', views.check_phone, name='customers_check_phone'),
+    path('create-ajax/', views.create_customer_ajax, name='customers_create_ajax'),
+
+
 ]

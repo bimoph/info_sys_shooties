@@ -1,25 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Check Out</title>
-</head>
-<body>
-<div class="container mt-4">
-  <h2>Check Out</h2>
+{% extends 'base.html' %}
+
+{% block title %}Check Out{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-container {
+    max-width: 600px;
+    margin: 40px auto 60px;
+    padding: 0 16px;
+    font-family: Arial, sans-serif;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 14px rgb(0 0 0 / 0.1);
+    padding: 30px 30px 40px;
+  }
+  h2 {
+    font-weight: 700;
+    font-size: 28px;
+    color: #222;
+    margin-bottom: 30px;
+  }
+  p {
+    font-size: 16px;
+    margin-bottom: 18px;
+    color: #333;
+  }
+  form label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  input[type="file"] {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    box-sizing: border-box;
+    color: #444;
+  }
+  input[type="file"]:focus {
+    outline: none;
+    border-color: #dc3545;
+    box-shadow: 0 0 6px #dc3545aa;
+  }
+  .btn-checkout {
+    padding: 12px 24px;
+    background-color: #dc3545;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .btn-checkout:hover {
+    background-color: #b02a37;
+  }
+  .btn-back {
+    display: inline-block;
+    margin-left: 16px;
+    padding: 12px 24px;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  .btn-back:hover {
+    background-color: #5a6268;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container" role="main" aria-labelledby="page-title">
+  <h2 id="page-title">Check Out</h2>
+  
   <p><strong>Employee:</strong> {{ attendance.employee.name }}</p>
-  <p><strong>Check-In Time:</strong> {{ attendance.check_in }}</p>
-  <form method="post" enctype="multipart/form-data">
+  <p><strong>Check-In Time:</strong> {{ attendance.check_in|date:"Y-m-d H:i" }}</p>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
-    <div class="mb-3">
+    <div class="form-group">
       <label for="id_check_out_photo">Take Photo (Check-Out):</label>
-      <!-- <input type="file" name="check_out_photo" accept="image/*" capture="environment" required class="form-control" id="id_check_out_photo"> -->
-      <input type="file" name="check_out_photo" accept="image/*" capture="user" required class="form-control" id="id_check_out_photo">
+      <input type="file" id="id_check_out_photo" name="check_out_photo" accept="image/*" capture="user" required aria-required="true" />
     </div>
-    <button class="btn btn-danger">Check Out</button>
-    <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Back</a>
+
+    <button type="submit" class="btn-checkout" aria-label="Submit check-out">Check Out</button>
+    <a href="{% url 'attendance_list' %}" class="btn-back" role="button">Back</a>
   </form>
 </div>
-</body>
-</html>
+{% endblock %}

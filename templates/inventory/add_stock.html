@@ -1,68 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Add Stock</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-        }
-        h2 {
-            color: #333;
-        }
-        form {
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            max-width: 600px;
-        }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-        input[type="text"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        button,
-        .btn {
-            display: inline-block;
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-            margin-left: 10px;
-        }
-        .btn:hover {
-            opacity: 0.9;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Add Stock{% endblock %}
+
+{% block content %}
+<div class="form-container">
     <h2>➕ Add Stock</h2>
 
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Add Stock</button>
-        <a href="{% url 'inventory_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        <div class="form-buttons">
+            <button type="submit" class="btn">Add Stock</button>
+            <a href="{% url 'inventory_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
     </form>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background-color: #fff;
+        padding: 20px 25px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        margin-left: 10px;
+    }
+
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+
+    .form-buttons {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}

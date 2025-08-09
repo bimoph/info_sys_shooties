@@ -1,69 +1,130 @@
+{% extends 'base.html' %}
 {% load tz %}
 {% load humanize %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Attendance Detail</title>
-</head>
-<body>
-    <div class="container mt-4">
-        <h2>Attendance Detail</h2>
-        <table class="table table-bordered">
-            <tr>
-                <th>Employee</th>
-                <td>{{ attendance.employee.name }}</td>
-            </tr>
-            <tr>
-                <th>Check In</th>
-                <td>{{ attendance.check_in }}</td>
-            </tr>
-            <tr>
-                <th>Check Out</th>
-                <td>{{ attendance.check_out|default:"-" }}</td>
-            </tr>
-            <tr>
-                <th>Check In Photo</th>
-                <td>
-                    {% if attendance.check_in_photo %}
-                        <img src="{{ attendance.check_in_photo.url }}" alt="Check In Photo" width="200">
-                    {% else %}
-                        No photo
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>Check Out Photo</th>
-                <td>
-                    {% if attendance.check_out_photo %}
-                        <img src="{{ attendance.check_out_photo.url }}" alt="Check Out Photo" width="200">
-                    {% else %}
-                        No photo
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>Hours Worked</th>
-                <td>
-                    {% if attendance.check_out %}
-                        {{ attendance.check_out|timesince:attendance.check_in }}
-                    {% else %}
-                        {{ now|timesince:attendance.check_in }}
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>Salary Earned</th>
-                <td>
-                    {% if attendance.check_out %}
-                        Rp{{ attendance.salary_earned|intcomma }}
-                    {% else %}
-                        Not calculated yet
-                    {% endif %}
-            </tr>
-        </table>
-        <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Back</a>
-    </div>
-</body>
-</html>
+{% block title %}Attendance Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-container {
+    max-width: 650px;
+    margin: 40px auto 60px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 12px rgb(0 0 0 / 0.1);
+    padding: 30px 30px 40px;
+    font-family: Arial, sans-serif;
+  }
+  h2 {
+    font-weight: 700;
+    font-size: 28px;
+    color: #222;
+    margin-bottom: 30px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+    font-size: 16px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 12px 16px;
+    vertical-align: middle;
+  }
+  th {
+    background-color: #eee;
+    width: 180px;
+    text-align: left;
+  }
+  img {
+    border-radius: 6px;
+    max-width: 200px;
+    height: auto;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+  }
+  .btn-back {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+  .btn-back:hover {
+    background-color: #5a6268;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container" role="main" aria-labelledby="page-title">
+  <h2 id="page-title">Attendance Detail</h2>
+  <table role="table" aria-describedby="attendance-details-desc">
+    <tbody>
+      <tr>
+        <th scope="row">Employee</th>
+        <td>{{ attendance.employee.name }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Check In</th>
+        <td>{{ attendance.check_in|localtime|date:"Y-m-d H:i" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Check Out</th>
+        <td>
+          {% if attendance.check_out %}
+            {{ attendance.check_out|localtime|date:"Y-m-d H:i" }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Check In Photo</th>
+        <td>
+          {% if attendance.check_in_photo %}
+            <img src="{{ attendance.check_in_photo.url }}" alt="Check In Photo of {{ attendance.employee.name }}">
+          {% else %}
+            No photo
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Check Out Photo</th>
+        <td>
+          {% if attendance.check_out_photo %}
+            <img src="{{ attendance.check_out_photo.url }}" alt="Check Out Photo of {{ attendance.employee.name }}">
+          {% else %}
+            No photo
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Hours Worked</th>
+        <td>
+          {% if attendance.check_out %}
+            {{ attendance.check_out|timesince:attendance.check_in }}
+          {% else %}
+            {{ now|timesince:attendance.check_in }} (still working)
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Salary Earned</th>
+        <td>
+          {% if attendance.check_out %}
+            Rp{{ attendance.salary_earned|intcomma }}
+          {% else %}
+            Not calculated yet
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <a href="{% url 'attendance_list' %}" class="btn-back" role="button" aria-label="Back to attendance list">← Back</a>
+</div>
+{% endblock %}

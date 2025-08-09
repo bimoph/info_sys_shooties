@@ -1,65 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    {% load humanize %}
+{% extends 'base.html' %}
+{% load humanize %}
 
-    <meta charset="UTF-8">
-    <title>Smoothie Menu</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-            background: #fff;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px 15px;
-            text-align: left;
-        }
-        th {
-            background-color: #eee;
-        }
-        a.button {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 12px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Smoothie Menu</h1>
-    <table>
+{% block title %}Smoothie Menu{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width:900px; margin:40px auto;">
+  <h1>Smoothie Menu</h1>
+  
+    <a href="{% url 'create_smoothie_menu' %}" class="btn btn-primary">➕ Add Smoothie</a>
+    <a href="{% url 'inventory_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+    <br>
+  <div style="overflow-x:auto; background:#fff; border:1px solid #eee; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom: 16px;">
+    
+    <table class="table">
+      <thead>
         <tr>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Actions</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Actions</th>
         </tr>
+      </thead>
+      <tbody>
         {% for smoothie in smoothies %}
         <tr>
-            <td>{{ smoothie.name }}</td>
-            <td>Rp{{ smoothie.price|floatformat:2|intcomma }}</td>
-
-            <td>
-                <a href="{% url 'smoothie_detail' smoothie.pk %}">Detail</a> |
-
-                <a href="{% url 'smoothie_menu_delete' smoothie.pk %}">Delete</a>
-            </td>
+          <td>{{ smoothie.name }}</td>
+          <td>Rp {{ smoothie.price|floatformat:2|intcomma }}</td>
+          <td>
+            <a href="{% url 'smoothie_detail' smoothie.pk %}" class="link-primary">Detail</a> |
+            <a href="{% url 'smoothie_menu_delete' smoothie.pk %}" class="link-danger">Delete</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" style="text-align:center; color:#777;">No smoothies found.</td>
         </tr>
         {% endfor %}
+      </tbody>
     </table>
-    <a href="{% url 'create_smoothie_menu' %}" class="button">➕ Add Smoothie</a>
-</body>
-</html>
+  </div>
+
+  
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  h1 {
+    color: #222;
+    margin-bottom: 12px;
+  }
+  .btn-primary {
+    padding: 8px 14px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.2s ease;
+  }
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th, .table td {
+    border: 1px solid #ddd;
+    padding: 12px 16px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  .table th {
+    background-color: #f0f0f0;
+    font-weight: 700;
+    color: #444;
+  }
+  tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+  a.link-primary {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  a.link-primary:hover {
+    text-decoration: underline;
+  }
+  a.link-danger {
+    color: #dc3545;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  a.link-danger:hover {
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}

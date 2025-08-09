@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Order List{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width:900px; margin: 40px auto;">
+  <!-- <h2>All Orders</h2> -->
+
+  <div class="header-row">
+        <h1>All Orders</h1>
+        <div class="action-buttons">
+            <a href="{% url 'view_order' %}">Back to the dashboard</a>
+
+        </div>
+    </div>
+
+  <form method="get" style="margin-bottom:20px; display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+    <label>
+      Start Date:
+      <input type="date" name="start_date" value="{{ start_date }}">
+    </label>
+    <label>
+      End Date:
+      <input type="date" name="end_date" value="{{ end_date }}">
+    </label>
+    <button type="submit" style="padding:8px 20px;">Filter</button>
+    <a href="{% url 'order_list' %}" style="padding:8px 20px; background:#6c757d; color:white; border-radius:4px; text-decoration:none;">Reset</a>
+  </form>
+
+  <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;">
+    <thead style="background:#eee;">
+      <tr>
+        <th>Order ID</th>
+        <th>Date</th>
+        <th>Payment Method</th>
+        <th>Total Price (Rp)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if orders %}
+        {% for order in orders %}
+          <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ order.payment_method }}</td>
+            <td style="text-align:right;">{{ order.total_price|floatformat:0|intcomma }}</td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="4" style="text-align:center; font-style:italic;">No orders found for selected dates.</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:30px;">Total Amount by Payment Method</h3>
+  <table border="1" cellpadding="8" cellspacing="0" style="width:50%; border-collapse:collapse;">
+    <thead style="background:#eee;">
+      <tr>
+        <th>Payment Method</th>
+        <th>Total Amount (Rp)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payment_totals %}
+      <tr>
+        <td>{{ item.payment_method }}</td>
+        <td style="text-align:right;">{{ item.total_amount|floatformat:0|intcomma }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="2" style="text-align:center;">No payment data</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

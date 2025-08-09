@@ -1,18 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delete Ingredient</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Delete Ingredient{% endblock %}
+
+{% block content %}
+<div class="form-container">
     <h2>Delete Ingredient</h2>
-    <p>Are you sure you want to delete "{{ ingredient.name }}"?</p>
+    <p>Are you sure you want to delete "<strong>{{ ingredient.name }}</strong>"?</p>
+
     <form method="post">
         {% csrf_token %}
-        <button type="submit">Yes, delete</button>
-        <a href="{% url 'ingredient_list' %}">Cancel</a>
+        <div class="form-buttons">
+            <button type="submit" class="btn btn-danger">Yes, delete</button>
+            <a href="{% url 'inventory_dashboard' %}" class="btn btn-secondary">Cancel</a>
+        </div>
     </form>
+</div>
+{% endblock %}
 
-</body>
-</html>
+{% block extra_css %}
+<style>
+    .form-container {
+        background-color: #fff;
+        padding: 20px 25px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        max-width: 480px;
+        margin: 40px auto;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        text-align: center;
+    }
+
+    h2 {
+        color: #c82333; /* Bootstrap danger color */
+        margin-bottom: 20px;
+    }
+
+    p {
+        font-size: 16px;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+        min-width: 100px;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+        margin-right: 15px;
+    }
+
+    .btn-danger:hover {
+        background-color: #a71d2a;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+
+    .form-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+</style>
+{% endblock %}

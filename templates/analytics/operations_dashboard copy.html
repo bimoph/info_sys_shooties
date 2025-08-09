@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Operations Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .filters { margin-bottom: 18px; }
+    fieldset { border:1px solid #ddd; padding:8px; margin-bottom:8px; }
+    label { margin-right:12px; display:inline-block; }
+    .kpi-row { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+    .kpi { background:#fff; border:1px solid #eee; padding:12px; border-radius:8px; min-width:220px; flex:1 1 220px; }
+    .ingredient-grid { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; }
+    .ing-card { border:1px solid #eee; padding:10px; border-radius:8px; width:200px; background:#fafafa; }
+    .small { font-size:0.9rem; color:#666; }
+  </style>
+</head>
+<body>
+  <h2>Operations Dashboard</h2>
+
+  <form method="get" class="filters">
+    <label>Start Date:
+      <input type="date" name="start_date" value="{{ start_date }}">
+    </label>
+
+    <label>End Date:
+      <input type="date" name="end_date" value="{{ end_date }}">
+    </label>
+
+    <fieldset>
+      <legend>Filter by Menu</legend>
+      {% for menu in menus %}
+        <label>
+          <input type="checkbox" name="menu" value="{{ menu.id }}"
+             {% if menu.id|stringformat:"s" in selected_menus %}checked{% endif %}>
+          {{ menu.name }}
+        </label>
+      {% endfor %}
+    </fieldset>
+
+    <label>Time Division:
+      <select name="time_division">
+        <option value="" {% if not time_division_selected %}selected{% endif %}>-- All --</option>
+        <option value="morning" {% if time_division_selected == "morning" %}selected{% endif %}>Morning (09-11)</option>
+        <option value="lunch" {% if time_division_selected == "lunch" %}selected{% endif %}>Lunch (11-13)</option>
+        <option value="after_lunch" {% if time_division_selected == "after_lunch" %}selected{% endif %}>After Lunch (13-15)</option>
+        <option value="afternoon" {% if time_division_selected == "afternoon" %}selected{% endif %}>Afternoon (15-18)</option>
+      </select>
+    </label>
+
+    <!-- Independent stock snapshot date -->
+    <!-- <label>Stock snapshot date:
+      <input type="date" name="stock_date" value="{{ stock_date }}">
+      <small class="small">Snapshot at 23:00 (Jakarta)</small>
+    </label> -->
+
+    <button type="submit">Apply</button>
+    <a href="{% url 'operations_dashboard' %}">Reset</a>
+  </form>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <h4>Avg — Ready time</h4>
+      <div style="font-size:18px; font-weight:600;">{{ avg_ready_display }}</div>
+      <small class="small">Avg time between order created → ready</small>
+    </div>
+
+    <div class="kpi">
+      <h4>Avg — Served time from Ready</h4>
+      <div style="font-size:18px; font-weight:600;">{{ avg_served_from_ready_display }}</div>
+      <small class="small">Avg time between ready → served</small>
+    </div>
+
+    <div class="kpi">
+      <h4>Avg — Served time from Created</h4>
+      <div style="font-size:18px; font-weight:600;">{{ avg_served_from_created_display }}</div>
+      <small class="small">Avg time between order created → served</small>
+    </div>
+  </div>
+
+  <div style="max-width:700px; margin-bottom:18px;">
+    <h4>Durations (minutes) — visual</h4>
+    <canvas id="durationsChart"></canvas>
+  </div>
+
+    <form method="get">
+        <label>Stock Snapshot Date:</label>
+        <input type="date" name="stock_date" value="{{ stock_date }}">
+        <button type="submit">Show Snapshot</button>
+    </form>
+
+  <h3>Stock at {{ stock_date|default:"today" }} — snapshot at 23:00 (Jakarta)</h3>
+  <div class="ingredient-grid">
+    {% for card in ingredient_cards %}
+      <div class="ing-card">
+        <strong>{{ card.name }}</strong>
+        <div style="font-size:20px; margin-top:6px;">{{ card.stock_at_snapshot }} {{ card.unit }}</div>
+        <div class="small" style="margin-top:6px;">Stock at selected day 23:00 (Jakarta)</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const durationLabels = {{ duration_chart_labels|safe }};
+    const durationValues = {{ duration_chart_values|safe }};
+
+    new Chart(document.getElementById('durationsChart'), {
+      type: 'bar',
+      data: {
+        labels: durationLabels,
+        datasets: [{ label: 'Avg minutes', data: durationValues, backgroundColor: ['#4BC0C0','#36A2EB','#FFCE56'] }]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero:true } } }
+    });
+  </script>
+</body>
+</html>

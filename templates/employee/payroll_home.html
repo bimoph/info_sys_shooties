@@ -1,43 +1,45 @@
-{% load humanize %}
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payroll - Home</title>
+    <title>Payroll Detail</title>
 </head>
 <body>
-    <h1>Payroll Dashboard</h1>
+    <h2>Payroll for {{ payroll.employee.name }}</h2>
+<p>Period: {{ payroll.period_start }} to {{ payroll.period_end }}</p>
+<p>Total Paid: {{ payroll.total_paid }}</p>
+<p>Status: {{ payroll.is_paid|yesno:"Paid,Not Paid" }}</p>
 
-<table>
-  <thead>
-    <tr>
-      <th>Employee</th>
-      <th>Balance</th>
-      <th>Period</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for item in employee_data %}
-      <tr>
-        <td>{{ item.employee.name }}</td>
-        <td>Rp {{ item.current_balance|intcomma }}</td>
-        <td>
-          {% if item.period_start and item.period_end %}
-            {{ item.period_start }} to {{ item.period_end }}
-          {% else %}
-            -
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'employee_earned_summary' item.employee.id %}">View & Pay</a>
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
+{% if not payroll.is_paid %}
+    <form method="post" action="{% url 'pay_salary' payroll.pk %}">
+        {% csrf_token %}
+        <button type="submit">Pay Salary</button>
+    </form>
+{% endif %}
+
+<h3>Attendances</h3>
+<table border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Hours</th>
+            <th>Salary Earned</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for att in attendances %}
+        <tr>
+            <td>{{ att.check_in.date }}</td>
+            <td>{{ att.check_in }}</td>
+            <td>{{ att.check_out|default:"-" }}</td>
+            <td>{{ att.duration_in_hours|floatformat:2 }}</td>
+            <td>{{ att.salary_earned }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 
 </body>

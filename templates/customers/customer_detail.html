@@ -1,62 +1,166 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Customer Detail</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            max-width: 600px;
-            margin: auto;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        p {
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        .button {
-            display: inline-block;
-            margin-right: 10px;
-            padding: 8px 12px;
-            text-decoration: none;
-            border-radius: 4px;
-            color: white;
-        }
-        .btn-back {
-            background-color: #6c757d;
-        }
-        .btn-delete {
-            background-color: #dc3545;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-delete:hover {
-            background-color: #c82333;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>{{ customer.name }}</h2>
-        <p><strong>Phone:</strong> {{ customer.phone }}</p>
-        <p><strong>Joined:</strong> {{ customer.joined_at }}</p>
-        <form method="post" action="{% url 'delete_customer' customer.pk %}">
-            {% csrf_token %}
-            <a href="{% url 'customer_list' %}" class="button btn-back">← Back</a>
-            <button type="submit" class="button btn-delete">🗑️ Delete</button>
-        </form>
-        <a href="{% url 'edit_customer' customer.pk %}" class="button btn-edit" style="background-color:#28a745;">✏️ Edit</a>
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Customer: {{ customer.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+.page-card { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
+.card-panel {
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 6px 20px rgba(16,24,40,0.06);
+  border:1px solid rgba(16,24,40,0.04);
+  overflow:hidden;
+  padding:18px;
+}
+
+/* Header */
+.header-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.header-row h2 { margin:0; font-size:22px; color:#222; }
+
+/* Customer info */
+.meta { display:flex; gap:18px; flex-wrap:wrap; margin-bottom:12px; }
+.meta .item { font-size:14px; color:#333; }
+
+/* Buttons */
+.actions { display:flex; gap:10px; align-items:center; }
+.btn {
+  display:inline-block; padding:8px 12px; border-radius:8px; font-weight:700; text-decoration:none; border:none; cursor:pointer;
+}
+.btn-secondary { background:#6c757d; color:#fff; }
+.btn-secondary:hover { background:#545b62; }
+.btn-primary { background:#007bff; color:#fff; }
+.btn-primary:hover { background:#0069d9; }
+.btn-success { background:#28a745; color:#fff; }
+.btn-success:hover { background:#218838; }
+.btn-danger { background:#dc3545; color:#fff; }
+.btn-danger:hover { background:#b02a2f; }
+
+/* Orders table */
+.section { margin-top:12px; }
+.table-container {
+  overflow:auto;
+  background:#fff;
+  border-radius:8px;
+  border:1px solid #eee;
+  max-height: calc(8 * 64px + 80px); /* ~8 rows */
+}
+.table { width:100%; border-collapse:collapse; min-width:900px; }
+.table th, .table td {
+  padding:12px 14px; border-bottom:1px solid #f0f0f0; text-align:left; vertical-align:middle;
+}
+.table th { background:#f8f9fb; font-weight:700; position:sticky; top:0; z-index:1; }
+.table tr:hover { background:#fbfdff; }
+
+/* Order items list inside table */
+.order-items { margin:0; padding-left:16px; }
+
+/* Small text */
+.small { font-size:13px; color:#666; }
+
+/* Responsive */
+@media (max-width:900px) {
+  .table { min-width:700px; }
+  .header-row { flex-direction:column; align-items:flex-start; gap:8px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-card">
+  <div class="card-panel" role="region" aria-labelledby="cust-title">
+    <div class="header-row">
+      <div>
+        <h2 id="cust-title">{{ customer.name }}</h2>
+        <div class="meta">
+          <div class="item"><strong>Phone:</strong> {{ customer.phone }}</div>
+          <div class="item"><strong>Joined:</strong> {{ customer.joined_at|date:"Y-m-d" }}</div>
+        </div>
+      </div>
+
+      <div class="actions" role="group" aria-label="Customer actions">
+        <a href="{% url 'customer_list' %}" class="btn btn-secondary">← Back</a>
+        <a href="{% url 'edit_customer' customer.pk %}" class="btn btn-success">✏️ Edit</a>
+
+        <form method="post" action="{% url 'delete_customer' customer.pk %}" style="display:inline;" id="deleteCustomerForm">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger" id="deleteCustomerBtn">🗑️ Delete</button>
+        </form>
+      </div>
     </div>
-</body>
-</html>
+
+    <hr style="border:none; border-top:1px solid #f0f0f0; margin:6px 0 14px;">
+
+    <section class="section" aria-labelledby="orders-title">
+      <h3 id="orders-title" style="margin:0 0 10px 0;">Order History ({{ orders|length }})</h3>
+
+      {% if orders %}
+      <div class="table-container" role="region" aria-label="Orders table">
+        <table class="table" aria-describedby="orders-title">
+          <thead>
+            <tr>
+              <th style="width:90px;">Order ID</th>
+              <th>Order Name</th>
+              <th style="width:150px;">Date</th>
+              <th style="width:120px;">Total Price</th>
+              <th style="width:120px;">Payment</th>
+              <th>Items</th>
+              <th style="width:120px;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td>#{{ order.id }}</td>
+              <td>{{ order.name }}</td>
+              <td class="small">{{ order.created_at|date:"M d, Y H:i" }}</td>
+              <td>Rp {{ order.total_price|intcomma }}</td>
+              <td class="small">{{ order.get_payment_method_display }}</td>
+              <td>
+                <ul class="order-items">
+                  {% for item in order.orderitem_set.all %}
+                    <li>{{ item.smoothie.name }} × {{ item.quantity }}</li>
+                  {% endfor %}
+                </ul>
+              </td>
+              <td>
+                {% if order.is_served %}
+                  <span title="Served">✅ Served</span>
+                {% elif order.is_ready %}
+                  <span title="Ready">🟡 Ready</span>
+                {% else %}
+                  <span title="Pending">⏳ Pending</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <p class="small">No orders yet for this customer.</p>
+      {% endif %}
+    </section>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const delBtn = document.getElementById('deleteCustomerBtn');
+  const delForm = document.getElementById('deleteCustomerForm');
+
+  if (delBtn && delForm) {
+    delBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const ok = confirm('Are you sure you want to delete this customer and all related data? This cannot be undone.');
+      if (ok) {
+        delForm.submit();
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,41 +1,288 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance List</title>
-</head>
-<body>
-    <div class="container mt-4">
-    <h2>Attendance Records</h2>
-    <a href="{% url 'check_in' %}" class="btn btn-primary mb-3">Check In</a>
-    <table class="table table-bordered">
-        <thead>
+{% extends 'base.html' %}
+
+{% block title %}Attendance Records{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-container {
+  max-width: 1000px;
+  margin: 40px auto 60px;
+  padding: 0 16px;
+}
+h2 {
+  color: #222;
+  font-weight: 700;
+  font-size: 28px;
+  margin-bottom: 28px;
+}
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: center;
+  margin-bottom: 24px;
+  background: #fff;
+  padding: 20px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.05);
+}
+.filter-form label {
+  font-weight: 600;
+  font-size: 15px;
+  color: #444;
+  white-space: nowrap;
+}
+.filter-form select,
+.filter-form input[type="date"] {
+  padding: 8px 12px;
+  font-size: 15px;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  min-width: 160px;
+  transition: border-color 0.3s ease;
+}
+.filter-form select:focus,
+.filter-form input[type="date"]:focus {
+  outline: none;
+  border-color: #007bff;
+}
+.filter-form button,
+.filter-form a.btn {
+  padding: 10px 20px;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+.filter-form button.btn-primary,
+.filter-form a.btn-primary {
+  background-color: #007bff;
+  color: #fff;
+}
+.filter-form button.btn-primary:hover,
+.filter-form a.btn-primary:hover {
+  background-color: #0056b3;
+}
+.filter-form a.btn-secondary {
+  background-color: #6c757d;
+  color: #fff;
+}
+.filter-form a.btn-secondary:hover {
+  background-color: #565e64;
+}
+
+.btn {
+        display: inline-block;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+.actions {
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+}
+.actions a.btn {
+  padding: 12px 22px;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+.actions a.btn-primary {
+  background-color: #007bff;
+  color: #fff;
+}
+.actions a.btn-primary:hover {
+  background-color: #0056b3;
+}
+.actions a.btn-secondary {
+  background-color: #6c757d;
+  color: #fff;
+}
+.actions a.btn-secondary:hover {
+  background-color: #565e64;
+}
+
+.error-message {
+  background-color: #ffe5e5;
+  color: #b00020;
+  padding: 14px 20px;
+  border-radius: 6px;
+  margin-bottom: 24px;
+  font-weight: 600;
+  border: 1.5px solid #b00020;
+  max-width: 600px;
+}
+
+form#do-payroll-form {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.07);
+  max-width: 1000px;
+  margin: auto;
+}
+
+table.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  margin-top: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.05);
+}
+table.attendance-table th,
+table.attendance-table td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+}
+table.attendance-table th {
+  background-color: #f8f9fa;
+  font-weight: 700;
+  color: #555;
+}
+table.attendance-table tbody tr:last-child td {
+  border-bottom: none;
+}
+table.attendance-table tbody tr:hover {
+  background-color: #f1f7ff;
+}
+.attendance-table input[type="checkbox"] {
+  transform: scale(1.3);
+  cursor: pointer;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: white;
+  background-color: #17a2b8;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btn-sm:hover {
+  background-color: #117a8b;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container" role="main">
+  <h2>Attendance Records</h2>
+
+  {% if role == 'admin' or role == 'manager' %}
+  <!-- Filter Form -->
+  <form method="get" class="filter-form" aria-label="Filter attendance records">
+    <label for="employee-select">Employee:</label>
+    <select id="employee-select" name="employee" aria-describedby="employee-help">
+      <option value="">All</option>
+      {% for emp in employees %}
+        <option value="{{ emp.id }}" {% if emp.id|stringformat:"s" == selected_employee %}selected{% endif %}>
+          {{ emp.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <label for="start-date">Start Date:</label>
+    <input type="date" id="start-date" name="start_date" value="{{ start_date }}">
+
+    <label for="end-date">End Date:</label>
+    <input type="date" id="end-date" name="end_date" value="{{ end_date }}">
+
+    <button type="submit" class="btn-primary" aria-label="Filter attendance records">Filter</button>
+    <a href="{% url 'attendance_list' %}" class="btn btn-secondary" aria-label="Reset filters">Reset</a>
+  </form>
+  {% endif %}
+
+  <div class="actions" role="navigation" aria-label="Quick actions">
+    <a href="{% url 'check_in' %}" class="btn btn-primary">Check In</a>
+    {% if role == 'admin' or role == 'manager' %}
+    <a href="{% url 'payroll_list' %}" class="btn btn-secondary">Payroll Records</a>
+    {% endif %}
+  </div>
+
+  {% if error %}
+    <div class="error-message" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" id="do-payroll-form" aria-label="Select attendance records to process payroll">
+    {% csrf_token %}
+    {% if role == 'admin' or role == 'manager' %}<button type="submit" class="btn" style="margin-bottom: 16px;">Do Payroll</button>{% endif %}
+
+    <table class="attendance-table" role="table" aria-describedby="attendance-description">
+      <caption id="attendance-description" class="sr-only">List of attendance records with payroll status</caption>
+      <thead>
         <tr>
-            <th>Employee</th>
-            <th>Check In</th>
-            <th>Check Out</th>
-            <th>Hours Worked</th>
-            <th>Action</th>
+          {% if role == 'admin' or role == 'manager' %}
+          <th scope="col">Select</th>
+          {% endif %}  
+          <th scope="col">Employee</th>
+          <th scope="col">Check In</th>
+          <th scope="col">Check Out</th>
+          <th scope="col">Hours Worked</th>
+          <th scope="col">Paid?</th>
+          <th scope="col">Action</th>
         </tr>
-        </thead>
-        <tbody>
+      </thead>
+      <tbody>
         {% for record in records %}
         <tr>
-            <td>{{ record.employee.name }}</td>
-            <td>{{ record.check_in }}</td>
-            <td>{{ record.check_out|default:"-" }}</td>
-            <td>{{ record.hours_worked }} hours</td>
-            <td>
-                {% if not record.check_out %}
-                    <a href="{% url 'check_out' record.id %}" class="btn btn-success btn-sm">Check Out</a>
-                {% endif %}
-                <a href="{% url 'attendance_detail' record.id %}" class="btn btn-info btn-sm">Detail</a>
-            </td>
+          {% if role == 'admin' or role == 'manager' %}
+          <td>
+            {% if not record.payroll %}
+              <input type="checkbox" name="attendance_ids" value="{{ record.id }}" aria-label="Select attendance record for {{ record.employee.name }}">
+            {% endif %}
+          </td>
+          {% endif %}  
+          
+          <td>{{ record.employee.name }}</td>
+          <td>{{ record.check_in }}</td>
+          <td>{{ record.check_out|default:"-" }}</td>
+          <td>{{ record.hours_worked }}</td>
+          <td>{{ record.payroll|yesno:"Yes,No" }}</td>
+          <td>
+            
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    {% if not record.check_out %}
+                        <a href="{% url 'check_out' record.id %}" class="btn btn-success btn-sm">Check Out</a>
+                    {% endif %}
+                    <a href="{% url 'attendance_detail' record.id %}" class="btn-sm" aria-label="View details for attendance record of {{ record.employee.name }}">Detail</a>
+                </div>
+            
+          </td>
         </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center; padding:20px; font-style:italic; color:#666;">No attendance records found.</td></tr>
         {% endfor %}
-        </tbody>
+      </tbody>
     </table>
-    </div>
-</body>
-</html>
+  </form>
+</div>
+{% endblock %}

@@ -1,206 +1,463 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Create Order</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 40px;
-            background-color: #f7f9fc;
-        }
+{% extends "base.html" %}
+{% load currency_filters %}
+{% block title %}Create Order{% endblock %}
 
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
+{% block extra_css %}
+<style>
+/* Page layout (same style as before) */
+.create-order-page { max-width: 920px; margin: 24px auto; padding: 0 16px; }
+.header-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 18px; }
+.header-row h1 { margin:0; font-size:22px; color:#222; }
+.btn { display:inline-block; padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer; text-decoration:none; border: none; }
+.btn-ghost { background:transparent; color:#007bff; border:1px solid transparent; }
+.btn-primary { background:#28a745; color:white; }
+.btn-secondary { background:#007bff; color:white; }
+.modal { display:none; position:fixed; left:50%; top:10%; transform:translateX(-50%); width:min(680px,94%); background:#fff; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.12); z-index:1100; padding:18px; }
+.modal h3 { margin-top:0; }
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:1050; }
+.form-card { background:#fff; border-radius:10px; padding:18px; box-shadow:0 4px 14px rgba(0,0,0,0.06); display:grid; grid-template-columns: 1fr 320px; gap:18px; }
+@media (max-width: 900px) { .form-card { grid-template-columns:1fr; } }
+.menu-list { max-height:60vh; overflow:auto; padding-right:4px; }
+.menu-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px; background:#fbfbfb; border:1px solid #eee; border-radius:8px; margin-bottom:10px; }
+.menu-info { display:flex; gap:12px; align-items:center; }
+.menu-name { font-weight:600; color:#222; }
+.menu-price { color:#666; font-size:13px; }
+.quantity-control { display:flex; align-items:center; gap:8px; }
+.quantity-control button { width:34px; height:34px; border-radius:8px; border:none; background:#007bff; color:white; font-size:18px; cursor:pointer; }
+.quantity-control input { width:64px; height:34px; text-align:center; font-weight:600; border:1px solid #ddd; border-radius:6px; }
+.sidebar { background:#fafafa; border-radius:8px; padding:14px; border:1px solid #eee; height:100%; display:flex; flex-direction:column; gap:12px; }
+.customer-card { background:#fff; border:1px solid #e6f0ff; padding:8px 10px; border-radius:8px; }
+.customer-card .name { font-weight:700; }
+.small { font-size:13px; color:#666; }
+.cart-list { display:flex; flex-direction:column; gap:8px; max-height:36vh; overflow:auto; padding-right:6px; }
+.cart-item { display:flex; justify-content:space-between; gap:8px; padding:8px; background:white; border-radius:6px; border:1px solid #eee; }
+.cart-item .left { display:flex; flex-direction:column; }
+.cart-item .qty { font-weight:700; color:#333; }
+.totals { margin-top:auto; }
+.total-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-weight:700; font-size:18px; }
+label { display:block; font-weight:600; margin-bottom:6px; color:#333; }
+input[type="text"], input[type="tel"], select { width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; background:white; }
+.form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+.empty { color:#777; text-align:center; padding:10px; }
+.muted { color:#777; font-size:13px; }
+.badge { background:#007bff; color:white; padding:2px 8px; border-radius:999px; font-size:12px; }
 
-        form {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            max-width: 700px;
-            margin: auto;
-        }
+/* small inline feedback */
+.feedback { font-size:13px; color:#b02a37; margin-top:6px; }
+</style>
+{% endblock %}
 
-        label {
-            font-weight: 600;
-            display: block;
-            margin-bottom: 5px;
-            color: #444;
-        }
+{% block content %}
+<div class="create-order-page">
+  <div class="header-row">
+    <h1>Create New Order</h1>
+    <div>
+      <button type="button" class="btn btn-ghost" id="openCustomerBtn">👥 Choose / Create Member</button>
+    </div>
+  </div>
 
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 6px;
-            background-color: #fafafa;
-        }
-
-        .menu-label {
-            flex-grow: 1;
-            font-size: 15px;
-        }
-
-        .quantity-control {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .quantity-control button {
-            width: 30px;
-            height: 30px;
-            border: none;
-            border-radius: 4px;
-            background-color: #007bff;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .quantity-control input {
-            width: 50px;
-            text-align: center;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            height: 30px;
-        }
-
-        .footer-form {
-            margin-top: 20px;
-        }
-
-        .footer-form span {
-            font-weight: bold;
-            font-size: 16px;
-            color: #333;
-        }
-
-        button[type="submit"] {
-            background-color: #28a745;
-            color: white;
-            padding: 12px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        a {
-            display: block;
-            text-align: center;
-            margin-top: 25px;
-            color: #007bff;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-
-<h1>Create New Order</h1>
-<form method="post">
-    {% csrf_token %}
-    {% load currency_filters %}
-    
-    <label for="id_name">Name:</label>
-    {{ form.name }}
-
-    <label for="id_phone_number">Phone Number:</label>
-    {{ form.phone_number }}
-
-    <label>Smoothie Menu (with quantity):</label>
-    {% for smoothie in smoothies %}
-        <div class="menu-item">
-            <div class="menu-label">{{ smoothie.name }} ({{ smoothie.price|rupiah }})</div>
-            <div class="quantity-control">
-                <button type="button" class="decrease-btn">−</button>
-                <input
-                    type="number"
-                    name="smoothie_{{ smoothie.id }}"
-                    data-price="{{ smoothie.price }}"
-                    min="0"
-                    value="0"
-                    class="smoothie-qty"
-                >
-                <button type="button" class="increase-btn">+</button>
-            </div>
+  <!-- Selected customer preview -->
+  <div id="selectedCustomerWrap" style="display:none; margin-bottom:12px;">
+    <div class="customer-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="name" id="selectedCustomerName"></div>
+          <div class="small" id="selectedCustomerPhone"></div>
         </div>
+        <div>
+          <button type="button" class="btn btn-ghost" id="cancelCustomerBtn">Cancel Member</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="form-card" id="orderForm" novalidate>
+    {% csrf_token %}
+    <!-- LEFT: menu list -->
+    <div>
+      <label for="id_name">Customer Name:</label>
+      <input type="text" name="name" id="id_name" placeholder="Customer or guest name">
+
+      <label for="phone_display" style="margin-top:8px;">Phone (Member Only):</label>
+      <input type="tel" id="phone_display" name="phone_display" readonly placeholder="Select or create member to autofill">
+
+      <!-- Hidden fields -->
+      <input type="hidden" name="selected_customer_id" id="selected_customer_id" value="">
+      <input type="hidden" name="new_phone" id="new_phone" value="">
+      <input type="hidden" name="total_price" id="total_price_hidden" value="0">
+
+      <hr style="margin:12px 0; border-color:#f0f0f0;">
+
+      <label>Smoothie Menu (select qty)</label>
+      <div class="menu-list" id="menuList">
+        {% for smoothie in smoothies %}
+          <div class="menu-item" data-id="{{ smoothie.id }}" data-price="{{ smoothie.price }}">
+            <div class="menu-info">
+              <div class="menu-name">{{ smoothie.name }}</div>
+              <div class="menu-price">{{ smoothie.price|rupiah }}</div>
+            </div>
+            <div class="quantity-control" aria-label="Quantity control for {{ smoothie.name }}">
+              <button type="button" class="decrease-btn" aria-label="Decrease">−</button>
+              <input type="number" name="smoothie_{{ smoothie.id }}" min="0" value="0" class="smoothie-qty" aria-label="Quantity for {{ smoothie.name }}">
+              <button type="button" class="increase-btn" aria-label="Increase">+</button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- RIGHT: sidebar - cart + payment -->
+    <aside class="sidebar" aria-live="polite">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div><strong>Cart</strong></div>
+          <div class="muted">Items: <span id="cartCount">0</span></div>
+        </div>
+        <div class="cart-list" id="cartList">
+          <div class="empty" id="cartEmpty">No items selected</div>
+        </div>
+      </div>
+
+      <div class="totals">
+        <div class="total-row">
+          <div class="muted">Total</div>
+          <div id="total_price_display">Rp 0</div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label for="id_payment_method">Payment Method</label>
+          {{ form.payment_method }}
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="submitBtn">Create Order</button>
+          <a href="{% url 'view_order' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </div>
+    </aside>
+  </form>
+</div>
+
+<!-- Customer modal -->
+<div id="customerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle">
+  <h3 id="customerModalTitle">Find existing member</h3>
+
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <input id="customerSearch" type="text" placeholder="Search by name or phone..." style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd;">
+    <button type="button" class="btn btn-secondary" id="modalCreateBtn">Create</button>
+  </div>
+
+  <ul id="customerResults" style="list-style:none; padding:0; margin:0; max-height:240px; overflow:auto; border-top:1px solid #f0f0f0;">
+    {% for customer in customers %}
+      <li class="customer-row" data-id="{{ customer.id }}" data-name="{{ customer.name }}" data-phone="{{ customer.phone }}"
+          style="padding:10px; border-bottom:1px solid #f6f6f6; cursor:pointer;">
+        <strong>{{ customer.name }}</strong> <div class="small" style="margin-top:4px;">{{ customer.phone }}</div>
+      </li>
     {% endfor %}
+    {% if customers|length == 0 %}
+      <li class="empty">No members yet</li>
+    {% endif %}
+  </ul>
 
-    <div class="footer-form">
-        <label>Total Price: <span id="total_price_display">Rp 0</span></label>
-        <input type="hidden" name="total_price" id="total_price_hidden">
+  <hr style="margin:12px 0; border-color:#f0f0f0;">
+
+  <div>
+    <h4 style="margin:0 0 8px 0;">Create quick member</h4>
+    <input id="newMemberName" type="text" placeholder="Name" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:8px;">
+    <input id="newMemberPhone" type="tel" placeholder="Phone" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:8px;">
+    <div style="display:flex; gap:8px; margin-top:6px;">
+      <button type="button" class="btn btn-primary" id="saveMemberBtn">Save & Use</button>
+      <button type="button" class="btn btn-ghost" id="closeModalBtn">Close</button>
     </div>
+    <div id="modalFeedback" class="feedback" style="display:none;"></div>
+  </div>
+</div>
 
-    <div class="footer-form">
-        <label for="id_payment_method">Payment Method:</label>
-        {{ form.payment_method }}
-    </div>
+<div id="modalBackdrop" class="modal-backdrop" tabindex="-1"></div>
+{% endblock %}
 
-    <button type="submit">Create Order</button>
-</form>
-
-<a href="{% url 'view_order' %}">← Back to Order List</a>
-
+{% block extra_js %}
 <script>
-    const qtyInputs = document.querySelectorAll('.smoothie-qty');
-    const totalPriceDisplay = document.getElementById('total_price_display');
-    const totalPriceHidden = document.getElementById('total_price_hidden');
-    const increaseBtns = document.querySelectorAll('.increase-btn');
-    const decreaseBtns = document.querySelectorAll('.decrease-btn');
+/* Helper to get CSRF from cookie */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let c of cookies) {
+            const cookie = c.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
 
-    function formatRupiah(number) {
-        return 'Rp ' + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+(function () {
+  // Utility
+  function formatRupiah(number){
+    if (!number) return 'Rp 0';
+    return 'Rp ' + String(number).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  // DOM elements
+  const menuList = document.getElementById('menuList');
+  const qtyInputs = () => Array.from(document.querySelectorAll('.smoothie-qty'));
+  const cartList = document.getElementById('cartList');
+  const cartCount = document.getElementById('cartCount');
+  const totalDisplay = document.getElementById('total_price_display');
+  const totalHidden = document.getElementById('total_price_hidden');
+  const submitBtn = document.getElementById('submitBtn');
+  const cartEmpty = document.getElementById('cartEmpty');
+
+  // Customer modal elements
+  const openCustomerBtn = document.getElementById('openCustomerBtn');
+  const customerModal = document.getElementById('customerModal');
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const customerRows = Array.from(document.querySelectorAll('.customer-row'));
+  const customerSearch = document.getElementById('customerSearch');
+  const selectedCustomerWrap = document.getElementById('selectedCustomerWrap');
+  const selectedCustomerName = document.getElementById('selectedCustomerName');
+  const selectedCustomerPhone = document.getElementById('selectedCustomerPhone');
+  const selectedCustomerIdHidden = document.getElementById('selected_customer_id');
+  const phoneDisplay = document.getElementById('phone_display');
+  const saveMemberBtn = document.getElementById('saveMemberBtn');
+  const newMemberName = document.getElementById('newMemberName');
+  const newMemberPhone = document.getElementById('newMemberPhone');
+  const modalCreateBtn = document.getElementById('modalCreateBtn');
+  const cancelCustomerBtn = document.getElementById('cancelCustomerBtn');
+  const modalFeedback = document.getElementById('modalFeedback');
+
+  // init
+  updateCartUI();
+
+  // Event: increase/decrease buttons (delegated)
+  menuList.addEventListener('click', (e) => {
+    if (e.target.closest('.increase-btn') || e.target.closest('.decrease-btn')) {
+      const inc = !!e.target.closest('.increase-btn');
+      const menuItem = e.target.closest('.menu-item');
+      if (!menuItem) return;
+      const input = menuItem.querySelector('.smoothie-qty');
+      const old = parseInt(input.value) || 0;
+      input.value = inc ? old + 1 : Math.max(0, old - 1);
+      updateCartUI();
+    }
+  });
+
+  // Manual input change
+  menuList.addEventListener('input', (e) => {
+    if (e.target.matches('.smoothie-qty')) {
+      if (e.target.value === '') e.target.value = 0;
+      if (parseInt(e.target.value) < 0) e.target.value = 0;
+      updateCartUI();
+    }
+  });
+
+  // update cart UI
+  function updateCartUI(){
+    const inputs = qtyInputs();
+    let total = 0;
+    const items = [];
+    inputs.forEach(input => {
+      const qty = parseInt(input.value) || 0;
+      if (qty <= 0) return;
+      const itemNode = input.closest('.menu-item');
+      const id = itemNode.dataset.id;
+      const name = itemNode.querySelector('.menu-name').textContent.trim();
+      const price = parseInt(itemNode.dataset.price) || 0;
+      total += price * qty;
+      items.push({ id, name, qty, price });
+    });
+
+    cartList.innerHTML = '';
+    if (items.length === 0) {
+      cartList.appendChild(cartEmpty);
+      cartCount.textContent = 0;
+    } else {
+      if (cartEmpty.parentNode) cartEmpty.parentNode.removeChild(cartEmpty);
+      items.forEach(it => {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `<div class="left"><div>${it.name}</div><div class="small"> ${formatRupiah(it.price)}</div></div>
+                         <div class="right"><div class="qty">${it.qty} ×</div><div>${formatRupiah(it.price * it.qty)}</div></div>`;
+        cartList.appendChild(div);
+      });
+      cartCount.textContent = items.reduce((s,i) => s + i.qty, 0);
     }
 
-    function calculateTotal() {
-        let total = 0;
-        qtyInputs.forEach(input => {
-            const price = parseInt(input.dataset.price);
-            const quantity = parseInt(input.value) || 0;
-            total += price * quantity;
-        });
-        totalPriceDisplay.textContent = formatRupiah(total);
-        totalPriceHidden.value = total;
+    totalDisplay.textContent = formatRupiah(total);
+    totalHidden.value = total;
+    submitBtn.disabled = total === 0;
+    submitBtn.style.opacity = total === 0 ? 0.6 : 1;
+  }
+
+  // Modal open/close
+  function openModal(){
+    customerModal.style.display = 'block';
+    modalBackdrop.style.display = 'block';
+    customerSearch.value = '';
+    filterCustomerRows('');
+    modalFeedback.style.display = 'none';
+    customerSearch.focus();
+  }
+  function closeModal(){
+    customerModal.style.display = 'none';
+    modalBackdrop.style.display = 'none';
+    modalFeedback.style.display = 'none';
+  }
+
+  openCustomerBtn.addEventListener('click', openModal);
+  document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  // Filter customers (local list)
+  function filterCustomerRows(q){
+    q = (q||'').trim().toLowerCase();
+    customerRows.forEach(r => {
+      const name = r.dataset.name.toLowerCase();
+      const phone = r.dataset.phone.toLowerCase();
+      const match = name.includes(q) || phone.includes(q);
+      r.style.display = match ? 'block' : 'none';
+    });
+  }
+  customerSearch.addEventListener('input', (e) => filterCustomerRows(e.target.value));
+
+  // clicking a customer row selects it
+  customerRows.forEach(r => {
+    r.addEventListener('click', () => {
+      const id = r.dataset.id;
+      const name = r.dataset.name;
+      const phone = r.dataset.phone;
+      useCustomer(id, name, phone);
+      closeModal();
+    });
+  });
+
+  // AJAX helper: check phone existence
+  async function checkPhoneServer(phone){
+    if (!phone) return {exists:false};
+    const url = `{% url 'customers_check_phone' %}?phone=${encodeURIComponent(phone)}`;
+    try {
+      const res = await fetch(url, { credentials: 'same-origin' });
+      if (!res.ok) return {exists:false};
+      return await res.json();
+    } catch (err) {
+      console.error('checkPhone error', err);
+      return {exists:false};
+    }
+  }
+
+  // AJAX helper: create customer server-side
+  async function createCustomerServer(name, phone){
+    const url = `{% url 'customers_create_ajax' %}`;
+    const form = new FormData();
+    form.append('name', name);
+    form.append('phone', phone);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': csrftoken },
+        body: form
+      });
+      return await res.json();
+    } catch (err) {
+      console.error('createCustomer error', err);
+      return { success:false, error: 'Network error' };
+    }
+  }
+
+  // Save & Use button in modal: check phone first, then use existing or create
+  saveMemberBtn.addEventListener('click', async () => {
+    modalFeedback.style.display = 'none';
+    const name = newMemberName.value.trim();
+    const phone = newMemberPhone.value.trim();
+    if (!name || !phone) {
+      modalFeedback.textContent = 'Please fill name and phone.';
+      modalFeedback.style.display = 'block';
+      return;
     }
 
-    qtyInputs.forEach(input => {
-        input.addEventListener('input', calculateTotal);
-    });
+    // Check server if phone exists
+    modalFeedback.textContent = 'Checking phone…';
+    modalFeedback.style.display = 'block';
+    const chk = await checkPhoneServer(phone);
+    if (chk && chk.exists) {
+      // already exists — prompt to use existing
+      const use = confirm(`Phone ${phone} is already used by "${chk.name}".\nUse existing member? (OK = use existing, Cancel = abort)`);
+      if (use) {
+        useCustomer(chk.id, chk.name, chk.phone);
+        closeModal();
+        return;
+      } else {
+        // user cancelled: don't create duplicate; allow them to change phone or cancel
+        modalFeedback.textContent = 'Please change phone or use the existing member.';
+        return;
+      }
+    }
 
-    increaseBtns.forEach((btn, index) => {
-        btn.addEventListener('click', () => {
-            qtyInputs[index].value = parseInt(qtyInputs[index].value) + 1;
-            calculateTotal();
-        });
-    });
+    // not exists — create via AJAX and use the returned customer (server also double-checks)
+    modalFeedback.textContent = 'Creating member…';
+    const created = await createCustomerServer(name, phone);
+    if (created && created.success) {
+      // server returns created: true/false and id, name
+      useCustomer(created.id, created.name, created.phone);
+      closeModal();
+      return;
+    } else {
+      modalFeedback.textContent = created.error || 'Failed to create member.';
+    }
+  });
 
-    decreaseBtns.forEach((btn, index) => {
-        btn.addEventListener('click', () => {
-            qtyInputs[index].value = Math.max(0, parseInt(qtyInputs[index].value) - 1);
-            calculateTotal();
-        });
-    });
+  // Create button (focus create inputs)
+  modalCreateBtn.addEventListener('click', () => newMemberName.focus());
 
-    calculateTotal(); // Initial call
+  // Use selected customer: populate form & preview
+  function useCustomer(id, name, phone){
+    selectedCustomerWrap.style.display = 'block';
+    selectedCustomerName.textContent = name;
+    selectedCustomerPhone.textContent = phone;
+    selectedCustomerIdHidden.value = id || '';
+    phoneDisplay.value = phone || '';
+    document.getElementById('id_name').value = name || '';
+    document.getElementById('id_name').readOnly = true;
+    document.getElementById('id_name').style.backgroundColor = '#f6f6f6';
+    document.getElementById('new_phone').value = phone || '';
+    cancelCustomerBtn.style.display = 'inline-block';
+  }
+
+  // Cancel selected customer
+  cancelCustomerBtn.addEventListener('click', () => {
+    selectedCustomerWrap.style.display = 'none';
+    selectedCustomerName.textContent = '';
+    selectedCustomerPhone.textContent = '';
+    selectedCustomerIdHidden.value = '';
+    phoneDisplay.value = '';
+    document.getElementById('id_name').value = '';
+    document.getElementById('id_name').readOnly = false;
+    document.getElementById('id_name').style.backgroundColor = '';
+    document.getElementById('new_phone').value = '';
+    cancelCustomerBtn.style.display = 'none';
+  });
+
+  // Form submit validation: ensure at least one item selected and total > 0
+  document.getElementById('orderForm').addEventListener('submit', function(e){
+    if (parseInt(totalHidden.value || 0) <= 0) {
+      e.preventDefault();
+      alert('Please add at least one item to the order.');
+      return false;
+    }
+    // server will also check duplicates and handle gracefully
+  });
+
+  // Prevent accidental number scroll changes
+  document.querySelectorAll('.smoothie-qty').forEach(input => {
+    input.addEventListener('wheel', (ev) => ev.target.blur());
+  });
+
+})();
 </script>
-
-</body>
-</html>
+{% endblock %}

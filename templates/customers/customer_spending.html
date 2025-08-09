@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Customer Spending Report{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-card {
+  max-width: 900px;
+  margin: 40px auto 60px;
+  padding: 0 16px;
+}
+.card-panel {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(16,24,40,0.06);
+  border: 1px solid rgba(16,24,40,0.04);
+  padding: 28px 24px;
+}
+h1 {
+  color: #222;
+  font-weight: 700;
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+.filter-form {
+  margin-bottom: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+.filter-form label {
+  font-weight: 600;
+  font-size: 15px;
+  color: #444;
+}
+.filter-form input[type="date"] {
+  padding: 10px 14px;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  transition: border-color 0.3s ease;
+}
+.filter-form input[type="date"]:focus {
+  outline: none;
+  border-color: #007bff;
+}
+.filter-form button {
+  padding: 12px 22px;
+  background-color: #007bff;
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.3s ease;
+}
+.filter-form button:hover {
+  background-color: #0056b3;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.05);
+}
+th, td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  font-size: 15px;
+}
+th {
+  background-color: #f8f9fa;
+  font-weight: 700;
+  color: #555;
+}
+tr:last-child td {
+  border-bottom: none;
+}
+a.back-link {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-weight: 600;
+  color: #007bff;
+  text-decoration: none;
+  font-size: 15px;
+  transition: color 0.3s ease;
+}
+a.back-link:hover {
+  text-decoration: underline;
+  color: #0056b3;
+}
+.no-data {
+  text-align: center;
+  font-style: italic;
+  padding: 30px 0;
+  background: #fff;
+  border-radius: 6px;
+  color: #777;
+  font-size: 16px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-card" role="main">
+  <section class="card-panel" aria-labelledby="page-title">
+    <h1 id="page-title">Customer Spending Report</h1>
+
+    <a href="{% url 'customer_list' %}" class="back-link" aria-label="Back to Customer List">← Back to Customer List</a>
+
+    <form method="get" class="filter-form" aria-label="Filter spending report by date range">
+      <label for="start_date">From:</label>
+      <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+
+      <label for="end_date">To:</label>
+      <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+
+      <button type="submit" aria-label="Filter spending report">🔍 Filter</button>
+    </form>
+
+    {% if report_data %}
+    <table role="table" aria-describedby="report-description">
+      <caption id="report-description" class="sr-only">Customer spending amounts sorted descending</caption>
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Phone</th>
+          <th scope="col">Total Spent</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for item in report_data|dictsortreversed:"total_spent" %}
+        <tr>
+          <td><a href="{% url 'customer_detail' item.pk %}">{{ item.name }}</a></td>
+          <td>{{ item.phone }}</td>
+          <td>Rp {{ item.total_spent|floatformat:0|intcomma }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="no-data">No spending data available.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

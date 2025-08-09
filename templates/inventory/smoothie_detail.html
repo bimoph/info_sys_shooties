@@ -1,51 +1,206 @@
-<!DOCTYPE html>
-<html>
-<head>
-    {% load humanize %}
-    <meta charset="UTF-8">
-    <title>Smoothie Detail</title>
-    <style>
-        body { font-family: Arial; margin: 40px; background-color: #f8f8f8; }
-        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 10px; }
-        th { background-color: #f0f0f0; }
-        .btn { padding: 6px 12px; text-decoration: none; border-radius: 4px; margin-right: 5px; }
-        .btn-primary { background-color: #007bff; color: white; }
-        .btn-danger { background-color: #dc3545; color: white; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>Edit Smoothie Menu</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-        </form>
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Edit Smoothie - {{ smoothie.name }}{% endblock %}
 
-        <h3 style="margin-top: 40px;">Ingredients</h3>
-        <table>
-            <tr>
+{% block extra_css %}
+<style>
+/* Page wrapper */
+.page-card {
+  max-width: 920px;
+  margin: 28px auto;
+  padding: 0 16px;
+}
+
+/* Card */
+.card-panel {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(16,24,40,0.06);
+  border: 1px solid rgba(16,24,40,0.04);
+  overflow: hidden;
+}
+
+/* Header row: title left, actions right */
+.card-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.card-header h2 { margin:0; font-size:20px; color:#222; }
+
+/* Body */
+.card-body { padding: 18px; display:grid; grid-template-columns: 1fr; gap:16px; }
+
+/* Form groups */
+.form-group { margin-bottom:10px; }
+label { display:block; margin-bottom:8px; font-weight:700; color:#222; }
+input[type="text"], input[type="number"], textarea, select {
+  width:100%;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid #e6e9ef;
+  background:#fff;
+  font-size:14px;
+  box-sizing:border-box;
+}
+
+/* Actions inside form */
+.form-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:6px; }
+
+/* Buttons */
+.btn {
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  border:none;
+}
+.btn-primary { background:#007bff; color:#fff; }
+.btn-primary:hover { background:#0069d9; }
+.btn-success { background:#28a745; color:#fff; }
+.btn-success:hover { background:#218838; }
+.btn-secondary { background:#6c757d; color:#fff; }
+.btn-secondary:hover { background:#5a6268; }
+.btn-danger { background:#dc3545; color:#fff; }
+.btn-danger:hover { background:#b02a37; }
+
+/* Ingredients table area */
+.section {
+  background:#fafafa;
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #f0f0f0;
+}
+.table-container {
+  max-height: calc(8 * 52px + 40px); /* show ~8 rows then scroll */
+  overflow-y: auto;
+  background:#fff;
+  border-radius:6px;
+  border:1px solid #eee;
+}
+.table {
+  width:100%;
+  border-collapse:collapse;
+}
+.table th, .table td {
+  padding:10px 12px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+  vertical-align:middle;
+}
+.table th {
+  background:#f8f9fb;
+  font-weight:700;
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+.table tr:hover { background: #fbfdff; }
+
+/* Empty state */
+.empty { padding:14px; color:#777; text-align:center; }
+
+/* small helpers */
+.small { font-size:13px; color:#666; }
+.badge { background:#007bff; color:#fff; padding:2px 8px; border-radius:999px; font-size:12px; }
+
+/* Responsive tweaks */
+@media (max-width:820px) {
+  .card-body { padding:14px; }
+  .card-header { padding:12px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-card">
+  <div class="card-panel">
+    <div class="card-header">
+      <h2>Edit Smoothie: {{ smoothie.name }}</h2>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <a href="{% url 'smoothie_menu_list' %}" class="btn btn-secondary" title="Back to Smoothie Menu">← Back to Menu</a>
+        <a href="{% url 'add_smoothie_ingredient' smoothie.pk %}" class="btn btn-primary">➕ Add Ingredient</a>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Edit form -->
+      <div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {# Render fields explicitly for consistent styling #}
+          {% for field in form %}
+            <div class="form-group">
+              <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <div class="small">{{ field.help_text }}</div>
+              {% endif %}
+              {% if field.errors %}
+                <div style="color:#c82333; margin-top:6px; font-size:13px;">
+                  {% for err in field.errors %}{{ err }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+
+          {% if form.non_field_errors %}
+            <div style="color:#c82333; margin-bottom:10px;">
+              {% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="form-actions">
+            <a href="{% url 'smoothie_menu_list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-success">Save Changes</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Ingredients -->
+      <div class="section">
+        <h3 style="margin:0 0 12px 0;">Ingredients</h3>
+
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
                 <th>Ingredient</th>
                 <th>Amount</th>
-                <th>Actions</th>
-            </tr>
-            {% for item in ingredients %}
-            <tr>
-                <td>{{ item.ingredient.name }}</td>
-                <td>{{ item.amount }}</td>
-                <td>
-                    <a href="{% url 'edit_smoothie_ingredient' item.id %}" class="btn btn-primary">Edit</a>
-                    <a href="{% url 'delete_smoothie_ingredient' item.id %}" class="btn btn-danger">Delete</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="3">No ingredients found.</td></tr>
-            {% endfor %}
-        </table>
+                <th>Unit</th>
+                <th style="width:170px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in ingredients %}
+                <tr>
+                  <td>{{ item.ingredient.name }}</td>
+                  <td>{{ item.amount }}</td>
+                  <td>{{ item.ingredient.unit }}</td>
+                  <td>
+                    <a href="{% url 'edit_smoothie_ingredient' item.id %}" class="btn btn-primary" style="padding:6px 10px;">Edit</a>
+                    <a href="{% url 'delete_smoothie_ingredient' item.id %}" class="btn btn-danger delete-ingredient" style="padding:6px 10px;">Delete</a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="empty">No ingredients added to this smoothie yet.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-        <a href="{% url 'add_smoothie_ingredient' smoothie.pk %}" class="btn btn-primary">➕ Add Ingredient</a>
     </div>
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}
+
+

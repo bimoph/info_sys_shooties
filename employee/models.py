@@ -6,7 +6,7 @@ class Employee(models.Model):
     name = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='employee_photos/', blank=True, null=True)
     daily_salary = models.PositiveIntegerField()
-    current_balance = models.PositiveIntegerField(default=0)
+    # current_balance = models.PositiveIntegerField(default=0
 
     def __str__(self):
         return self.name
@@ -19,6 +19,8 @@ class Attendance(models.Model):
 
     check_in_photo = models.ImageField(upload_to='checkin_photos/', null=True, blank=True)
     check_out_photo = models.ImageField(upload_to='checkout_photos/', null=True, blank=True)
+    payroll = models.ForeignKey('Payroll', on_delete=models.SET_NULL, null=True, blank=True, related_name='attendances')
+
 
 
 
@@ -47,7 +49,9 @@ class Payroll(models.Model):
     period_start = models.DateField(blank=True, null=True)
     period_end = models.DateField(blank=True, null=True)
     total_paid = models.IntegerField(blank=True, null=True)
-    paid_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    is_paid = models.BooleanField(default=False)
+
 
     def __str__(self):
         return f"{self.employee.name} - {self.period_start} to {self.period_end}"

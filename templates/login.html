@@ -1,14 +1,83 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login</title>
-</head>
-<body>
-    <h2>Login</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<style>
+  .login-container {
+    background: white;
+    padding: 30px 25px;
+    border-radius: 8px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    max-width: 400px;
+    margin: 40px auto;
+  }
+  .login-container h2 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    font-weight: bold;
+    margin-bottom: 6px;
+    margin-top: 12px;
+    color: #333;
+  }
+  input[type="text"],
+  input[type="password"] {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #0069d9;
+  }
+  .error {
+    color: #dc3545;
+    margin-top: 10px;
+    font-weight: 600;
+    text-align: center;
+  }
+  @media (max-width: 480px) {
+    .login-container {
+      margin: 20px 10px;
+      padding: 20px 15px;
+    }
+  }
+</style>
+
+<div class="login-container">
+  <h2>Login</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}
+        <div class="error">{{ field.errors|striptags }}</div>
+      {% endif %}
+    {% endfor %}
+    
+    <button type="submit">Login</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,134 +1,234 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>All Orders</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            border-bottom: 1px solid #ddd;
-            padding: 12px 16px;
-            text-align: left;
-            vertical-align: top;
-        }
-        th {
-            background-color: #fafafa;
-            font-weight: bold;
-        }
-        ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        .action-buttons {
-            margin-top: 30px;
-        }
-        .action-buttons a {
-            display: inline-block;
-            padding: 10px 16px;
-            background-color: #28a745;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            transition: background-color 0.2s ease;
-        }
-        .action-buttons a:hover {
-            background-color: #28a74684;
-        }
-        .served {
-            text-decoration: line-through;
-            opacity: 0.5;
-        }
-        .checkbox-cell {
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    {% load currency_filters %}
+{% extends 'base.html' %}
+{% load currency_filters %}
+{% block title %}All Orders{% endblock %}
+
+{% block content %}
+<div class="header-row">
     <h1>All Orders</h1>
-    <h3>Pending Orders</h3>
+    <div class="action-buttons">
+        <a href="{% url 'create_order' %}">➕ Create New Order</a>
+        {% if role == 'admin' or role == 'manager' %}
+        <a href="{% url 'order_list' %}" style="display:inline-block; padding:6px 12px; border:1px solid #6c757d; border-radius:4px; color:#6c757d; text-decoration:none; font-size:14px; cursor:pointer; background-color: transparent;">
+        Order List
+        </a>
+        {% endif %}
+
+    </div>
+</div>
+
+<h3>Pending Orders</h3>
+<div class="table-container">
     <table>
         {% include "sales/partials/order_table.html" with orders=pending_orders table_type="pending" %}
     </table>
+</div>
 
-    <h3>Ready Orders</h3>
+<h3>Ready Orders</h3>
+<div class="table-container">
     <table>
         {% include "sales/partials/order_table.html" with orders=ready_orders table_type="ready" %}
     </table>
+</div>
 
-    <h3>Served Orders</h3>
+<h3>Served Orders</h3>
+<div class="table-container">
     <table>
         {% include "sales/partials/order_table.html" with orders=served_orders table_type="served" %}
     </table>
+</div>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+    const csrfToken = '{{ csrf_token }}';
 
-
-    <div class="action-buttons">
-        <a href="{% url 'create_order' %}">➕ Create New Order</a>
-    </div>
-    <script>
-        function attachCheckboxEvents() {
-            document.querySelectorAll('.ready-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', async function () {
-                    const row = this.closest('tr');
-                    const orderId = row.dataset.orderId;
-                    const response = await fetch(`/sales/toggle-ready/${orderId}/`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}',
-                            'Content-Type': 'application/json'
-                        },
-                        body: '{}'
-                    });
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert("Failed to update ready status.");
-                        this.checked = !this.checked;
-                    }
-                });
-            });
-    
-            document.querySelectorAll('.served-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', async function () {
-                    const row = this.closest('tr');
-                    const orderId = row.dataset.orderId;
-                    const response = await fetch(`/sales/toggle-served/${orderId}/`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}',
-                            'Content-Type': 'application/json'
-                        },
-                        body: '{}'
-                    });
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert("Failed to update served status.");
-                        this.checked = !this.checked;
-                    }
-                });
-            });
+    async function postAction(url) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Failed to update order');
         }
-    
-        document.addEventListener('DOMContentLoaded', attachCheckboxEvents);
-    </script>
-    
-</body>
-</html>
+    }
+
+    document.querySelectorAll('.btn-ready').forEach(btn =>
+        btn.addEventListener('click', () => {
+            postAction(`/sales/mark-ready/${btn.dataset.id}/`);
+        })
+    );
+
+    document.querySelectorAll('.btn-served').forEach(btn =>
+        btn.addEventListener('click', () => {
+            postAction(`/sales/mark-served/${btn.dataset.id}/`);
+        })
+    );
+
+    document.querySelectorAll('.btn-delete').forEach(btn =>
+        btn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete this order?')) {
+                postAction(`/sales/delete-order/${btn.dataset.id}/`);
+            }
+        })
+    );
+
+    document.querySelectorAll('.btn-move-to-pending').forEach(btn =>
+        btn.addEventListener('click', () => {
+            postAction(`/sales/move-to-pending/${btn.dataset.id}/`);
+        })
+    );
+
+    document.querySelectorAll('.btn-move-to-ready').forEach(btn =>
+        btn.addEventListener('click', () => {
+            postAction(`/sales/move-to-ready/${btn.dataset.id}/`);
+        })
+    );
+
+    function attachCheckboxEvents() {
+        document.querySelectorAll('.ready-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', async function () {
+                const orderId = this.closest('tr').dataset.orderId;
+                const response = await fetch(`/sales/toggle-ready/${orderId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: '{}'
+                });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert("Failed to update ready status.");
+                    this.checked = !this.checked;
+                }
+            });
+        });
+
+        document.querySelectorAll('.served-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', async function () {
+                const orderId = this.closest('tr').dataset.orderId;
+                const response = await fetch(`/sales/toggle-served/${orderId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: '{}'
+                });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert("Failed to update served status.");
+                    this.checked = !this.checked;
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', attachCheckboxEvents);
+
+    // Dropdown menu handling
+    document.querySelectorAll('.menu-button').forEach(button => {
+        button.addEventListener('click', e => {
+            e.stopPropagation();
+            const dropdown = button.nextElementSibling;
+
+            if (dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            document.querySelectorAll('.dropdown-content').forEach(menu => menu.style.display = 'none');
+
+            if (!document.body.contains(dropdown)) {
+                document.body.appendChild(dropdown);
+            }
+
+            const rect = button.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + window.scrollY) + "px";
+            dropdown.style.left = (rect.left + window.scrollX) + "px";
+
+            dropdown.style.display = 'block';
+        });
+    });
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.dropdown-content').forEach(menu => menu.style.display = 'none');
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    h1, h3 {
+        color: #333;
+    }
+
+    /* Align h1 left & button right */
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .action-buttons a {
+        display: inline-block;
+        padding: 10px 16px;
+        background-color: #28a745;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: background-color 0.2s ease;
+    }
+
+    .action-buttons a:hover {
+        background-color: #218838;
+    }
+
+    .served {
+        text-decoration: line-through;
+        opacity: 0.5;
+    }
+
+    .checkbox-cell {
+        text-align: center;
+    }
+
+    /* Scrollable table for >4 rows */
+    .table-container {
+        max-height: calc(4 * 48px);
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fff;
+        margin-bottom: 20px;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        border-bottom: 1px solid #ddd;
+        padding: 12px 16px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    th {
+        background-color: #fafafa;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+</style>
+{% endblock %}

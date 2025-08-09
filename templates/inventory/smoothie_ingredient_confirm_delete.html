@@ -1,20 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delete?</title>
-</head>
-<body>
-    <div class="container mt-4">
-    <h2>Delete Ingredient</h2>
-    <p>Are you sure you want to delete <strong>{{ ingredient.ingredient.name }}</strong> from <strong>{{ ingredient.smoothie.name }}</strong>?</p>
-    
-    <form method="post">
+{% extends 'base.html' %}
+{% block title %}Delete Ingredient{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Page wrapper */
+.page-card {
+  max-width: 720px;
+  margin: 28px auto;
+  padding: 0 16px;
+}
+
+/* Card */
+.card-panel {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(16,24,40,0.06);
+  border: 1px solid rgba(16,24,40,0.04);
+  overflow: hidden;
+  padding: 18px;
+}
+
+/* Header */
+.card-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 14px;
+}
+.card-header h2 { margin:0; font-size:20px; color:#c82333; } /* red-ish heading */
+
+/* Message */
+.confirm-text { font-size:16px; color:#333; margin:12px 0 18px; }
+
+/* Buttons */
+.form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+.btn {
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  border:none;
+}
+.btn-secondary { background:#6c757d; color:#fff; }
+.btn-secondary:hover { background:#545b62; }
+.btn-danger { background:#dc3545; color:#fff; }
+.btn-danger:hover { background:#a71d2a; }
+
+/* Small note */
+.note { font-size:13px; color:#666; margin-top:8px; }
+
+/* Small screens */
+@media (max-width:640px) {
+  .card-panel { padding:14px; }
+  .card-header h2 { font-size:18px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-card">
+  <div class="card-panel" role="region" aria-labelledby="del-title">
+    <div class="card-header">
+      <h2 id="del-title">Delete Ingredient</h2>
+      <div class="small muted">Smoothie: <strong>{{ ingredient.smoothie.name }}</strong></div>
+    </div>
+
+    <p class="confirm-text">
+      Are you sure you want to remove
+      <strong>{{ ingredient.ingredient.name }}</strong>
+      ({{ ingredient.amount }} {{ ingredient.ingredient.unit }})
+      from
+      <strong>{{ ingredient.smoothie.name }}</strong>?
+    </p>
+
+    <p class="note">This action will remove the relation between the ingredient and the smoothie. It will not delete the ingredient itself from inventory.</p>
+
+    <form method="post" aria-label="Confirm delete ingredient">
       {% csrf_token %}
-      <a href="{% url 'smoothie_detail' ingredient.smoothie.pk %}" class="btn btn-secondary">Cancel</a>
-      <button type="submit" class="btn btn-danger">Yes, delete</button>
+      <div class="form-actions">
+        <a href="{% url 'smoothie_detail' ingredient.smoothie.pk %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-danger">Yes, remove ingredient</button>
+      </div>
     </form>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}

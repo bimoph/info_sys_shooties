@@ -17,13 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from core.views import home
+from core.views import home, no_permission
 from django.conf import settings
 from django.conf.urls.static import static
 
 
 urlpatterns = [
     path('', home, name='home'),
+    path('no-permission/', no_permission, name='no_permission'),
     path("admin/", admin.site.urls),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
@@ -31,6 +32,7 @@ urlpatterns = [
     path('customers/', include('customers.urls')),
     path('employee/', include('employee.urls')),
     path('sales/', include('sales.urls')),
+    path('analytics/', include('analytics.urls')),
     
 
 ]

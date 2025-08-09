@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% load humanize %}
+{% block title %}Payroll Records{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-container {
+  max-width: 900px;
+  margin: 40px auto 60px;
+  padding: 0 16px;
+  font-family: Arial, sans-serif;
+}
+h2 {
+  font-weight: 700;
+  font-size: 28px;
+  color: #222;
+  margin-bottom: 24px;
+}
+.navigation-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+}
+.navigation-link:hover {
+  text-decoration: underline;
+}
+table.payroll-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 15px;
+}
+table.payroll-table th,
+table.payroll-table td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+  color: #444;
+}
+table.payroll-table th {
+  background-color: #f8f9fa;
+  font-weight: 700;
+  color: #555;
+}
+table.payroll-table tbody tr:last-child td {
+  border-bottom: none;
+}
+table.payroll-table tbody tr:hover {
+  background-color: #f1f7ff;
+}
+a.detail-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1.5px solid #007bff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+a.detail-link:hover {
+  background-color: #007bff;
+  color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container" role="main">
+  <h2>Payroll Records</h2>
+
+  <a href="{% url 'attendance_list' %}" class="navigation-link" aria-label="Go to attendance records">← Attendance Records</a>
+
+  {% if payrolls %}
+  <table class="payroll-table" role="table" aria-describedby="payroll-description">
+    <caption id="payroll-description" class="sr-only">List of payroll records with payment status</caption>
+    <thead>
+      <tr>
+        <th scope="col">Employee</th>
+        <th scope="col">Period</th>
+        <th scope="col">Total Paid</th>
+        <th scope="col">Paid?</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for payroll in payrolls %}
+      <tr>
+        <td>{{ payroll.employee.name }}</td>
+        <td>{{ payroll.period_start|date:"Y-m-d" }} – {{ payroll.period_end|date:"Y-m-d" }}</td>
+        <td>Rp {{ payroll.total_paid|intcomma }}</td>
+        <td>{{ payroll.is_paid|yesno:"Yes,No" }}</td>
+        <td>
+          <a href="{% url 'payroll_detail' payroll.pk %}" class="detail-link" aria-label="View details for payroll of {{ payroll.employee.name }}">Detail</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="font-style: italic; color: #666; margin-top: 24px;">No payroll records found.</p>
+  {% endif %}
+</div>
+{% endblock %}

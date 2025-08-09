@@ -1,50 +1,122 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Smoothie Ingredient</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-        }
-        form {
-            background: #fff;
-            padding: 20px;
-            border-radius: 6px;
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: bold;
-        }
-        input, select {
-            padding: 8px;
-            width: 100%;
-            margin-top: 5px;
-        }
-        button, a.button {
-            margin-top: 20px;
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border: none;
-            border-radius: 4px;
-        }
-        a.button {
-            background-color: #6c757d;
-        }
-    </style>
-</head>
-<body>
-    <h1>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Smoothie Ingredient</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Save</button>
-        <a href="{% url 'smoothie_menu_list' %}" class="button">Cancel</a>
+{% extends 'base.html' %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Smoothie Ingredient{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Page wrapper */
+.form-page {
+  max-width: 720px;
+  margin: 28px auto;
+  padding: 0 16px;
+}
+
+/* Card */
+.form-card {
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 6px 20px rgba(16,24,40,0.06);
+  border:1px solid rgba(16,24,40,0.04);
+  padding:18px;
+}
+
+/* Header row */
+.header-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.header-row h1 { margin:0; font-size:20px; color:#222; }
+
+/* Form fields */
+.form-group { margin-bottom:12px; }
+label { display:block; margin-bottom:6px; font-weight:700; color:#222; }
+input[type="text"], input[type="number"], select {
+  width:100%;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid #e6e9ef;
+  font-size:14px;
+  box-sizing:border-box;
+  background:#fff;
+}
+
+/* Buttons */
+.form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+.btn {
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  border:none;
+}
+.btn-primary { background:#007bff; color:#fff; }
+.btn-primary:hover { background:#0069d9; }
+.btn-secondary { background:#6c757d; color:#fff; }
+.btn-secondary:hover { background:#565e64; }
+
+/* Error styling */
+.field-errors { color:#c82333; margin-top:6px; font-size:13px; }
+
+/* Small screens */
+@media (max-width:640px) {
+  .form-card { padding:14px; }
+  .header-row h1 { font-size:18px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-card">
+    <div class="header-row">
+      <h1>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Smoothie Ingredient</h1>
+      <div>
+        {% if smoothie %}
+          <a href="{% url 'smoothie_detail' smoothie.pk %}" class="btn btn-secondary">← Back to Smoothie</a>
+        {% else %}
+          <a href="{% url 'smoothie_menu_list' %}" class="btn btn-secondary">← Back to Menu</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {# Render form fields explicitly to control layout and errors #}
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}
+            <div class="small" style="margin-top:6px;">{{ field.help_text }}</div>
+          {% endif %}
+          {% if field.errors %}
+            <div class="field-errors">
+              {% for err in field.errors %}{{ err }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      {% if form.non_field_errors %}
+        <div class="field-errors" style="margin-bottom:10px;">
+          {% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-actions">
+        {% if smoothie %}
+          <a href="{% url 'smoothie_detail' smoothie.pk %}" class="btn btn-secondary">Cancel</a>
+        {% else %}
+          <a href="{% url 'smoothie_menu_list' %}" class="btn btn-secondary">Cancel</a>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">{% if form.instance.pk %}Save Changes{% else %}Add Ingredient{% endif %}</button>
+      </div>
     </form>
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}

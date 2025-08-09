@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 # from django.db.models import F  # ✅ Import F from django.db.models
 from .models import Ingredient, StockEntry, SmoothieMenu, SmoothieIngredient
 
-from .forms import StockEntryForm, IngredientForm, SmoothieIngredientForm, SmoothieMenuForm
+from .forms import StockEntryForm, IngredientForm, SmoothieIngredientForm, SmoothieMenuForm, StockEntryEditForm
 from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
@@ -18,7 +18,8 @@ def inventory_dashboard(request):
     ingredients = Ingredient.objects.all()
     # low_stock = ingredients.filter(quantity_in_stock__lt=5)  # ✅ fixed threshold
     return render(request, 'inventory/dashboard.html', {
-        'ingredients': ingredients
+        'ingredients': ingredients,
+        'role': request.user.role,
     })
 
 @login_required
@@ -41,7 +42,7 @@ def add_stock(request):
     else:
         form = StockEntryForm()
 
-    return render(request, 'inventory/add_stock.html', {'form': form})
+    return render(request, 'inventory/add_stock.html', {'form': form, 'role': request.user.role,})
 
 
 
@@ -49,7 +50,7 @@ def add_stock(request):
 # def ingredient_list(request):
 #     ingredients = Ingredient.objects.all()
 #     return render(request, 'inventory/ingredient_list.html', {'ingredients': ingredients})
-
+@login_required
 def ingredient_create(request):
     if request.method == 'POST':
         form = IngredientForm(request.POST)
@@ -58,8 +59,9 @@ def ingredient_create(request):
             return redirect('inventory_dashboard')
     else:
         form = IngredientForm()
-    return render(request, 'inventory/ingredient_form.html', {'form': form, 'title': 'Add Ingredient'})
+    return render(request, 'inventory/ingredient_form.html', {'form': form, 'title': 'Add Ingredient', 'role': request.user.role,})
 
+@login_required
 def ingredient_update(request, pk):
     ingredient = get_object_or_404(Ingredient, pk=pk)
     if request.method == 'POST':
@@ -69,18 +71,25 @@ def ingredient_update(request, pk):
             return redirect('inventory_dashboard')
     else:
         form = IngredientForm(instance=ingredient)
-    return render(request, 'inventory/ingredient_form.html', {'form': form, 'title': 'Edit Ingredient'})
+    return render(request, 'inventory/ingredient_form.html', {'form': form, 'title': 'Edit Ingredient', 'role': request.user.role,})
 
+@login_required
 def ingredient_delete(request, pk):
     ingredient = get_object_or_404(Ingredient, pk=pk)
     if request.method == 'POST':
         ingredient.delete()
         return redirect('inventory_dashboard')
-    return render(request, 'inventory/ingredient_confirm_delete.html', {'ingredient': ingredient})
+    return render(request, 'inventory/ingredient_confirm_delete.html', {'ingredient': ingredient, 'role': request.user.role,})
 
-
+@login_required
 def stockentry_list(request):
-    entries = StockEntry.objects.select_related('ingredient').order_by('-timestamp')
+    user = request.user
+
+    if user.role == 'cashier':
+        entries = StockEntry.objects.select_related('ingredient').filter(reason='manual_add').order_by('-timestamp')
+    else:
+        entries = StockEntry.objects.select_related('ingredient').order_by('-timestamp')
+
 
     if 'export' in request.GET:
         # CSV export
@@ -100,70 +109,49 @@ def stockentry_list(request):
             ])
         return response
 
-    return render(request, 'inventory/stockentry_list.html', {'entries': entries})
+    return render(request, 'inventory/stockentry_list.html', {'entries': entries, 'role': request.user.role,})
 
+@login_required
+def stockentry_edit(request, pk):
+    entry = get_object_or_404(StockEntry, pk=pk)
 
+    if request.method == 'POST':
+        form = StockEntryEditForm(request.POST, instance=entry)
+        if form.is_valid():
+            form.save()
+            return redirect('stockentry_list')
+    else:
+        form = StockEntryEditForm(instance=entry)
+
+    return render(request, 'inventory/stockentry_edit.html', {'form': form, 'entry': entry, 'role': request.user.role,})
+
+@login_required
+def stockentry_delete(request, pk):
+    entry = get_object_or_404(StockEntry, pk=pk)
+
+    if request.method == 'POST':
+        entry.delete()
+        return redirect('stockentry_list')
+
+    return render(request, 'inventory/stockentry_delete_confirm.html', {'entry': entry, 'role': request.user.role,})
 
 
 # Smoothie Menu Views
+@login_required
 def smoothie_menu_list(request):
     smoothies = SmoothieMenu.objects.all()
-    return render(request, 'inventory/smoothie_menu_list.html', {'smoothies': smoothies})
+    return render(request, 'inventory/smoothie_menu_list.html', {'smoothies': smoothies, 'role': request.user.role,})
 
-# def smoothie_menu_create(request):
-#     if request.method == 'POST':
-#         form = SmoothieMenuForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('smoothie_menu_list')
-#     else:
-#         form = SmoothieMenuForm()
-#     return render(request, 'inventory/smoothie_menu_form.html', {'form': form})
-
-# def smoothie_menu_update(request, pk):
-#     smoothie = get_object_or_404(SmoothieMenu, pk=pk)
-#     if request.method == 'POST':
-#         form = SmoothieMenuForm(request.POST, instance=smoothie)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('smoothie_menu_list')
-#     else:
-#         form = SmoothieMenuForm(instance=smoothie)
-#     return render(request, 'inventory/smoothie_menu_form.html', {'form': form})
-
+@login_required
 def smoothie_menu_delete(request, pk):
     smoothie = get_object_or_404(SmoothieMenu, pk=pk)
     if request.method == 'POST':
         smoothie.delete()
         return redirect('smoothie_menu_list')
-    return render(request, 'inventory/smoothie_menu_confirm_delete.html', {'smoothie': smoothie})
-
-# # Smoothie Ingredient Views
-# def smoothie_ingredient_list(request):
-#     ingredients = SmoothieIngredient.objects.select_related('smoothie', 'ingredient')
-#     return render(request, 'inventory/smoothie_ingredient_list.html', {'ingredients': ingredients})
-
-# def smoothie_ingredient_create(request):
-#     if request.method == 'POST':
-#         form = SmoothieIngredientForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('smoothie_ingredient_list')
-#     else:
-#         form = SmoothieIngredientForm()
-#     return render(request, 'inventory/smoothie_ingredient_form.html', {'form': form})
-
-# def smoothie_ingredient_delete(request, pk):
-#     entry = get_object_or_404(SmoothieIngredient, pk=pk)
-#     if request.method == 'POST':
-#         entry.delete()
-#         return redirect('smoothie_ingredient_list')
-#     return render(request, 'inventory/smoothie_ingredient_confirm_delete.html', {'entry': entry})
-
-
-
+    return render(request, 'inventory/smoothie_menu_confirm_delete.html', {'smoothie': smoothie, 'role': request.user.role,})
 
 # menu & ingredient creation/editing views
+@login_required
 def create_smoothie_menu(request):
     if request.method == 'POST':
         form = SmoothieMenuForm(request.POST)
@@ -172,27 +160,9 @@ def create_smoothie_menu(request):
             return redirect('smoothie_menu_list')  # or your success URL
     else:
         form = SmoothieMenuForm()
-    return render(request, 'inventory/smoothie_menu_form.html', {'form': form})
+    return render(request, 'inventory/smoothie_menu_form.html', {'form': form, 'role': request.user.role,})
 
-def smoothie_edit(request, pk):
-    smoothie = get_object_or_404(SmoothieMenu, pk=pk)
-    if request.method == 'POST':
-        form = SmoothieMenuForm(request.POST, instance=smoothie)
-        formset = SmoothieIngredientFormSet(request.POST, instance=smoothie)
-        if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
-            return redirect('smoothie_menu_list')
-    else:
-        form = SmoothieMenuForm(instance=smoothie)
-        formset = SmoothieIngredientFormSet(instance=smoothie)
-
-    return render(request, 'inventory/smoothie_menu_form.html', {
-        'form': form,
-        'formset': formset,
-        'title': 'Edit Smoothie',
-    })
-
+@login_required
 def smoothie_detail(request, pk):
     smoothie = get_object_or_404(SmoothieMenu, pk=pk)
     ingredients = SmoothieIngredient.objects.filter(smoothie=smoothie)
@@ -208,8 +178,10 @@ def smoothie_detail(request, pk):
         'smoothie': smoothie,
         'form': form,
         'ingredients': ingredients,
+        'role': request.user.role,
     })
 
+@login_required
 def add_smoothie_ingredient(request, pk):
     smoothie = get_object_or_404(SmoothieMenu, pk=pk)
 
@@ -225,9 +197,11 @@ def add_smoothie_ingredient(request, pk):
 
     return render(request, 'inventory/smoothie_ingredient_form.html', {
         'form': form,
-        'smoothie': smoothie
+        'smoothie': smoothie,
+        'role': request.user.role,
     })
 
+@login_required
 def edit_smoothie_ingredient(request, pk):
     ingredient = get_object_or_404(SmoothieIngredient, pk=pk)
     if request.method == 'POST':
@@ -241,9 +215,11 @@ def edit_smoothie_ingredient(request, pk):
     return render(request, 'inventory/smoothie_ingredient_form.html', {
         'form': form,
         'smoothie': ingredient.smoothie,
-        'edit': True
+        'edit': True,
+        'role': request.user.role,
     })
 
+@login_required
 def delete_smoothie_ingredient(request, pk):
     ingredient = get_object_or_404(SmoothieIngredient, pk=pk)
     smoothie_pk = ingredient.smoothie.pk
@@ -254,4 +230,5 @@ def delete_smoothie_ingredient(request, pk):
 
     return render(request, 'inventory/smoothie_ingredient_confirm_delete.html', {
         'ingredient': ingredient,
+        'role': request.user.role,
     })

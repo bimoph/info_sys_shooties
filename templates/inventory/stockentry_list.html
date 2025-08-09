@@ -1,62 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Stock Entry List</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-            background: #fff;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px 15px;
-            text-align: left;
-        }
-        th {
-            background-color: #eee;
-        }
-        .btn {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 12px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Stock Entries</h1>
-    <a href="?export=true" class="btn">📤 Export as CSV</a>
-    <table>
+{% extends 'base.html' %}
+
+{% block title %}Stock Entry List{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width:900px; margin:40px auto;">
+  <h1>Stock Entries</h1>
+
+  <a href="{% url 'inventory_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+  {% if role == 'admin' or role == 'manager' %}
+  <a href="?export=true" class="btn btn-primary" style="margin-bottom:16px;">📤 Export as CSV</a>
+  {% endif %}
+
+  <div style="overflow-x:auto; background:#fff; border:1px solid #eee; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+    <table class="table">
+      <thead>
         <tr>
-            <th>Timestamp</th>
-            <th>Ingredient</th>
-            <th>Quantity</th>
-            <th>Unit</th>
-            <th>Reason</th>
+          <th>Timestamp</th>
+          <th>Ingredient</th>
+          <th>Quantity</th>
+          <th>Unit</th>
+          <th>Reason</th>
+          <th>Actions</th>
         </tr>
+      </thead>
+      <tbody>
         {% for entry in entries %}
         <tr>
-            <td>{{ entry.timestamp|date:"Y-m-d H:i" }}</td>
-            <td>{{ entry.ingredient.name }}</td>
-            <td>{{ entry.quantity }}</td>
-            <td>{{ entry.ingredient.unit }}</td>
-            <td>{{ entry.get_reason_display }}</td>
+          <td>{{ entry.timestamp|date:"Y-m-d H:i" }}</td>
+          <td>{{ entry.ingredient.name }}</td>
+          <td>{{ entry.quantity }}</td>
+          <td>{{ entry.ingredient.unit }}</td>
+          <td>{{ entry.get_reason_display }}</td>
+          <td>
+            <a href="{% url 'stockentry_edit' entry.pk %}" class="btn-primary" style="margin-right:6px;">✏️ Edit</a>
+            <a href="{% url 'stockentry_delete' entry.pk %}" class="btn-secondary" >🗑️ Delete</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="text-align:center; color:#777;">No stock entries found.</td>
         </tr>
         {% endfor %}
+      </tbody>
     </table>
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  h1 {
+    color: #222;
+    margin-bottom: 12px;
+  }
+  .btn-primary {
+    display: inline-block;
+    padding: 8px 14px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+  }
+  .btn-secondary {
+    display: inline-block;
+    padding: 8px 14px;
+    background-color: #f20a5b;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+  }
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+  table.table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table.table th, table.table td {
+    border: 1px solid #ddd;
+    padding: 12px 16px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  table.table th {
+    background-color: #f0f0f0;
+    font-weight: 700;
+    color: #444;
+  }
+  tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+</style>
+{% endblock %}

@@ -1,68 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Customer</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-      background-color: #f5f5f5;
-    }
-    .container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 8px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #333;
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
-    input[type="text"],
-    input[type="tel"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 15px;
-    }
-    button:hover {
-      background-color: #0069d9;
-    }
-    a {
-      margin-left: 10px;
-      text-decoration: none;
-      color: #6c757d;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Add New Customer</h2>
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">💾 Save</button>
-      <a href="{% url 'customer_list' %}">← Back</a>
-    </form>
+{% extends 'base.html' %}
+{% block title %}Add Customer{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Page wrapper */
+.form-page {
+  max-width: 720px;
+  margin: 28px auto;
+  padding: 0 16px;
+}
+
+/* Card */
+.form-card {
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 6px 20px rgba(16,24,40,0.06);
+  border:1px solid rgba(16,24,40,0.04);
+  overflow: hidden;
+}
+
+/* Header */
+.form-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 16px 18px;
+  border-bottom:1px solid #f0f0f0;
+}
+.form-header h2 { margin:0; font-size:20px; color:#222; }
+
+/* Body */
+.form-body { padding: 18px; }
+
+/* Form fields */
+.form-group { margin-bottom:14px; }
+label { display:block; margin-bottom:6px; font-weight:700; color:#222; }
+input[type="text"], input[type="tel"], textarea {
+  width:100%;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid #e6e9ef;
+  background:#fff;
+  font-size:14px;
+  box-sizing:border-box;
+}
+
+/* Inline errors */
+.field-errors { color:#c82333; margin-top:6px; font-size:13px; }
+
+/* Buttons */
+.form-actions {
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  padding: 0 18px 18px;
+}
+.btn {
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  border:none;
+}
+.btn-primary { background:#007bff; color:#fff; }
+.btn-primary:hover { background:#0069d9; }
+.btn-secondary { background:#6c757d; color:#fff; }
+.btn-secondary:hover { background:#565e64; }
+
+/* Small helper text */
+.small { font-size:13px; color:#666; margin-top:6px; }
+
+/* Responsive */
+@media (max-width:640px) {
+  .form-body { padding:12px; }
+  .form-header { padding:12px; }
+  .form-actions { padding: 0 12px 12px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-card" role="region" aria-labelledby="customer-form-title">
+    <div class="form-header">
+      <h2 id="customer-form-title">Add New Customer</h2>
+      <a href="{% url 'customer_list' %}" class="btn btn-secondary">← Back to Customers</a>
+    </div>
+
+    <div class="form-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {# Non-field errors #}
+        {% if form.non_field_errors %}
+          <div class="field-errors" style="margin-bottom:10px;">
+            {% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+          </div>
+        {% endif %}
+
+        {# Render fields individually for consistent layout and inline errors #}
+        {% for field in form %}
+          <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <div class="small">{{ field.help_text }}</div>
+            {% endif %}
+            {% if field.errors %}
+              <div class="field-errors">
+                {% for err in field.errors %}{{ err }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <div class="form-actions">
+          <a href="{% url 'customer_list' %}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">💾 Save Customer</button>
+        </div>
+      </form>
+    </div>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Autofocus first visible text input for quicker UX
+  document.addEventListener('DOMContentLoaded', function () {
+    const firstInput = document.querySelector('.form-body input[type="text"], .form-body input[type="tel"], .form-body textarea');
+    if (firstInput) firstInput.focus();
+  });
+</script>
+{% endblock %}

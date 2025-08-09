@@ -9,6 +9,7 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.quantity_in_stock} {self.unit})"
+   
 
 class StockEntry(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
@@ -18,6 +19,7 @@ class StockEntry(models.Model):
         ('manual_add', 'Manual Addition'),
         ('manual_deduct', 'Manual Deduction'),
         ('sale_deduct', 'Sale Deduction'),
+        ('sale_cancellation', 'Sale Cancellation'),
     ])
 
     def __str__(self):

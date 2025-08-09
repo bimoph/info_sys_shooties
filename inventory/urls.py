@@ -5,6 +5,8 @@ urlpatterns = [
     path('', views.inventory_dashboard, name='inventory_dashboard'),
     path('add-stock/', views.add_stock, name='add_stock'),
     path('stock-entries/', views.stockentry_list, name='stockentry_list'),
+    path('stock-entries/<int:pk>/edit/', views.stockentry_edit, name='stockentry_edit'),
+    path('stock-entries/<int:pk>/delete/', views.stockentry_delete, name='stockentry_delete'),
 
 
     # ingredient URLs
@@ -21,7 +23,7 @@ urlpatterns = [
 
     # # Smoothie Menu URLs
     path('smoothies/create/', views.create_smoothie_menu, name='create_smoothie_menu'),
-    path('smoothies/<int:pk>/edit/', views.smoothie_edit, name='smoothie_edit'),
+    # path('smoothies/<int:pk>/edit/', views.smoothie_edit, name='smoothie_edit'),
 
     path('smoothies/<int:pk>/detail/', views.smoothie_detail, name='smoothie_detail'),
 

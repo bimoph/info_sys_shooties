@@ -1,55 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Delete Smoothie</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-        }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .btn {
-            padding: 10px 16px;
-            text-decoration: none;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
 
-<div class="card">
-    <h1>Confirm Delete</h1>
-    <p>Are you sure you want to delete the smoothie <strong>{{ object.name }}</strong>?</p>
+{% block title %}Delete Smoothie{% endblock %}
 
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Yes, Delete</button>
-        <a href="{% url 'smoothie_menu_list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+{% block content %}
+<div class="card" style="max-width:500px; margin:40px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+  <h1 style="color:#222; margin-bottom:16px;">Confirm Delete</h1>
+  <p>Are you sure you want to delete the smoothie <strong>{{ object.name }}</strong>?</p>
+
+  <form method="post" style="margin-top:24px;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger" style="padding:10px 16px; border:none; border-radius:6px; cursor:pointer; background:#dc3545; color:#fff; font-weight:600; margin-right:12px;">
+      Yes, Delete
+    </button>
+    <a href="{% url 'smoothie_menu_list' %}" class="btn btn-secondary" style="padding:10px 16px; border-radius:6px; background:#6c757d; color:#fff; text-decoration:none; font-weight:600;">
+      Cancel
+    </a>
+  </form>
 </div>
-
-</body>
-</html>
+{% endblock %}

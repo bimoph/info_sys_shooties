@@ -40,3 +40,15 @@ class SmoothieIngredientForm(forms.ModelForm):
     class Meta:
         model = SmoothieIngredient
         fields = ['ingredient', 'amount']
+
+
+
+class StockEntryEditForm(forms.ModelForm):
+    class Meta:
+        model = StockEntry
+        fields = ['ingredient', 'quantity']
+        widgets = {
+            'ingredient': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'reason': forms.Select(attrs={'class': 'form-control'}),
+        }

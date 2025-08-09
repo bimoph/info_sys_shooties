@@ -1,74 +1,153 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Customer List</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-            background: #fff;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px 15px;
-            text-align: left;
-        }
-        th {
-            background-color: #eee;
-        }
-        a.button {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 12px;
-            background-color: #28a745;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-        .no-data {
-            text-align: center;
-            font-style: italic;
-            padding: 20px;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Customer List{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-card {
+  max-width: 1100px;
+  margin: 28px auto;
+  padding: 0 16px;
+}
+
+/* Header row */
+.header-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:18px;
+}
+.header-row h1 { margin:0; font-size:22px; color:#222; }
+
+/* Action buttons */
+.action-buttons { display:flex; gap:10px; align-items:center; }
+.btn {
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  border:none;
+}
+.btn-primary { background:#007bff; color:#fff; }
+.btn-primary:hover { background:#0069d9; }
+.btn-success { background:#28a745; color:#fff; }
+.btn-success:hover { background:#218838; }
+.btn-secondary { background:#6c757d; color:#fff; }
+.btn-secondary:hover { background:#565e64; }
+.btn-danger { background:#dc3545; color:#fff; }
+.btn-danger:hover { background:#b02a2f; }
+
+/* Table container (scroll after ~10 rows) */
+.table-container {
+  overflow:auto;
+  background:#fff;
+  border:1px solid #eee;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(16,24,40,0.04);
+  max-height: calc(10 * 52px + 60px); /* approx 10 rows */
+}
+
+/* Table */
+.table {
+  width:100%;
+  border-collapse:collapse;
+  min-width:700px;
+}
+.table th, .table td {
+  padding:12px 14px;
+  border-bottom:1px solid #f0f0f0;
+  text-align:left;
+  vertical-align:middle;
+}
+.table th {
+  background:#f8f9fb;
+  font-weight:700;
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+.table tr:hover { background:#fbfdff; }
+
+/* Actions cell */
+.actions { display:flex; gap:8px; align-items:center; }
+
+/* Empty state */
+.no-data {
+  padding:28px;
+  text-align:center;
+  color:#666;
+}
+
+/* Small responsive tweaks */
+@media (max-width:820px) {
+  .header-row { flex-direction:column; align-items:flex-start; gap:8px; }
+  .action-buttons { width:100%; justify-content:flex-start; flex-wrap:wrap; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-card">
+  <div class="header-row">
     <h1>Customer List</h1>
+    <div class="action-buttons">
+      <a href="{% url 'add_customer' %}" class="btn btn-success">➕ Add Customer</a>
+      <a href="{% url 'customer_spending_report' %}" class="btn btn-primary">Customer Spending</a>
+    </div>
+  </div>
 
-    <a href="{% url 'add_customer' %}" class="button">➕ Add Customer</a>
-
-    {% if customers %}
-    <table>
+  {% if customers %}
+  <div class="table-container" role="region" aria-label="Customer table">
+    <table class="table" aria-describedby="customer-list">
+      <thead>
         <tr>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Joined At</th>
-            <th>Actions</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Joined At</th>
+          <th style="width:180px;">Actions</th>
         </tr>
+      </thead>
+      <tbody>
         {% for customer in customers %}
         <tr>
-            <td>{{ customer.name }}</td>
-            <td>{{ customer.phone }}</td>
-            <td>{{ customer.joined_at }}</td>
-            <td>
-                <a href="{% url 'customer_detail' customer.pk %}">Detail</a> |
-                <a href="{% url 'delete_customer' customer.pk %}" class="delete-link">Delete</a>
-            </td>
+          <td>{{ customer.name }}</td>
+          <td>{{ customer.phone }}</td>
+          <td>{{ customer.joined_at|date:"Y-m-d" }}</td>
+
+          <td>
+            <div class="actions">
+              <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-primary" style="padding:6px 10px;">Detail</a>
+
+              <form method="post" action="{% url 'delete_customer' customer.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-delete" data-name="{{ customer.name }}" style="padding:6px 10px;">Delete</button>
+              </form>
+            </div>
+          </td>
         </tr>
         {% endfor %}
+      </tbody>
     </table>
-    {% else %}
-    <div class="no-data">No customers yet.</div>
-    {% endif %}
-</body>
-</html>
+  </div>
+  {% else %}
+  <div class="no-data">No customers yet.</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // confirmation for delete buttons
+  document.querySelectorAll('.btn-delete').forEach(function(btn) {
+    btn.addEventListener('click', function (e) {
+      const name = this.dataset.name || 'this customer';
+      const ok = confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`);
+      if (!ok) e.preventDefault();
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Edit Stock Entry{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 40px auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);">
+  <h1 style="margin-bottom: 24px; color: #222;">Edit Stock Entry</h1>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div style="margin-bottom: 16px;">
+      {{ form.ingredient.label_tag }}<br>
+      {{ form.ingredient }}
+      {{ form.ingredient.errors }}
+    </div>
+    <div style="margin-bottom: 16px;">
+      {{ form.quantity.label_tag }}<br>
+      {{ form.quantity }}
+      {{ form.quantity.errors }}
+    </div>
+    <div style="margin-bottom: 24px;">
+      {{ form.reason.label_tag }}<br>
+      {{ form.reason }}
+      {{ form.reason.errors }}
+    </div>
+    <button type="submit" class="btn-primary" style="padding: 10px 20px; font-weight: 600;">💾 Save Changes</button>
+    <a href="{% url 'stockentry_list' %}" class="btn-secondary" style="padding: 10px 20px; margin-left: 12px;">Cancel</a>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-primary {
+    display: inline-block;
+    padding: 8px 14px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+  }
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+  .btn-secondary {
+    display: inline-block;
+    padding: 8px 14px;
+    background-color: #f20a5b;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+  }
+  select, input[type=number] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+  select:focus, input[type=number]:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 4px #007bff;
+  }
+  label {
+    font-weight: 600;
+    color: #444;
+  }
+</style>
+{% endblock %}

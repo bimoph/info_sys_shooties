@@ -1,6 +1,7 @@
 from django.db import models
 from inventory.models import SmoothieMenu
 from django.utils import timezone
+from customers.models import Customer
 
 class Order(models.Model):
     PAYMENT_METHOD_CHOICES = [
@@ -10,7 +11,8 @@ class Order(models.Model):
     ]
 
     name = models.CharField(max_length=20)
-    phone_number = models.CharField(max_length=15)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True)
+
     total_price = models.IntegerField()
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES, default='qris')
 

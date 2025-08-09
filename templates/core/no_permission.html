@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}No Permission{% endblock %}
+{% block content %}
+<div style="text-align:center; padding: 40px;">
+  <h2>🚫 You do not have permission to access this page.</h2>
+  <p>Please contact your administrator if you believe this is an error.</p>
+  <a href="{% url 'home' %}" style="color:#007bff;">← Back to Home</a>
+</div>
+{% endblock %}
