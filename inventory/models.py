@@ -14,7 +14,7 @@ class Ingredient(models.Model):
    
 
 class StockEntry(models.Model):
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='stock_entries', blank=True, null=True)
+    # store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='stock_entries', blank=True, null=True)
 
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     quantity = models.FloatField()
@@ -30,7 +30,7 @@ class StockEntry(models.Model):
         return f"{self.ingredient.name}: {self.quantity} ({self.reason})"
 
 class SmoothieMenu(models.Model):
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='smoothie_menus', blank=True, null=True)
+    stores = models.ManyToManyField(Store, related_name='smoothie_menus')
 
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=8, decimal_places=2)
@@ -39,7 +39,7 @@ class SmoothieMenu(models.Model):
         return self.name
 
 class SmoothieIngredient(models.Model):
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='smoothie_ingredients', blank=True, null=True)
+    # store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='smoothie_ingredients', blank=True, null=True)
 
     smoothie = models.ForeignKey(SmoothieMenu, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
