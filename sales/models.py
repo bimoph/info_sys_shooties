@@ -2,6 +2,7 @@ from django.db import models
 from inventory.models import SmoothieMenu
 from django.utils import timezone
 from customers.models import Customer
+from core.models import Store
 
 class Order(models.Model):
     PAYMENT_METHOD_CHOICES = [
@@ -9,6 +10,7 @@ class Order(models.Model):
         ('qris', 'QRIS'),
         # Add more if needed
     ]
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='orders', null=True, blank=True)
 
     name = models.CharField(max_length=20)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True)

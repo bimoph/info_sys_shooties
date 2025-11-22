@@ -24,7 +24,7 @@ def analytics_dashboard(request):
     time_division = request.GET.get('time_division')  # morning/lunch/after_lunch/afternoon
 
     # --- Base queryset filtered by date & menu (DB-level) ---
-    orders_qs = Order.objects.all()
+    orders_qs = Order.objects.filter(store=request.user.store)
     if start_date:
         orders_qs = orders_qs.filter(created_at__date__gte=start_date)
     if end_date:
@@ -173,7 +173,7 @@ def operations_dashboard(request):
         stock_date = datetime.now(JKT).date()
 
     # --- Build base orders queryset based on DB filters (date & menu) ---
-    orders_qs = Order.objects.all()
+    orders_qs = Order.objects.filter(store=request.user.store)
     if start_date:
         orders_qs = orders_qs.filter(created_at__date__gte=start_date)
     if end_date:
@@ -281,8 +281,8 @@ def operations_dashboard(request):
     deduct_reasons = {'manual_deduct', 'sale_deduct'}
 
     ingredient_cards = []
-    for ing in Ingredient.objects.all().order_by('name'):
-        future_entries = StockEntry.objects.filter(ingredient=ing, timestamp__gt=snapshot_dt)
+    for ing in Ingredient.objects.filter(store=request.user.store).order_by('name'):
+        future_entries = StockEntry.objects.filter(ingredient=ing, timestamp__gt=snapshot_dt, store=request.user.store)
         future_net = 0.0
         for e in future_entries:
             q = e.quantity or 0.0

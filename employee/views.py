@@ -21,9 +21,9 @@ def attendance_list(request):
     today_jakarta = now().astimezone(jakarta_tz).date()
 
     if user.role == 'cashier':
-        records = Attendance.objects.select_related('employee').filter(check_in__date=today_jakarta).order_by('-check_in')
+        records = Attendance.objects.select_related('employee').filter(check_in__date=today_jakarta, store=request.user.store).order_by('-check_in')
     else:
-        records = Attendance.objects.select_related('employee').order_by('-check_in')
+        records = Attendance.objects.select_related('employee').filter(store=request.user.store).order_by('-check_in')
 
     # Get filter values from request GET parameters
     employee_id = request.GET.get('employee')

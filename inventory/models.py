@@ -1,7 +1,9 @@
 from django.db import models
-
+from core.models import Store
 
 class Ingredient(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='ingredients', blank=True, null=True)
+
     name = models.CharField(max_length=100)
     unit = models.CharField(max_length=50, default='ml')  # could be ml, gram, pcs, etc.
     quantity_in_stock = models.FloatField(default=0)  # current stock
@@ -12,6 +14,8 @@ class Ingredient(models.Model):
    
 
 class StockEntry(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='stock_entries', blank=True, null=True)
+
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     quantity = models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -26,6 +30,8 @@ class StockEntry(models.Model):
         return f"{self.ingredient.name}: {self.quantity} ({self.reason})"
 
 class SmoothieMenu(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='smoothie_menus', blank=True, null=True)
+
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=8, decimal_places=2)
 
@@ -33,6 +39,8 @@ class SmoothieMenu(models.Model):
         return self.name
 
 class SmoothieIngredient(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='smoothie_ingredients', blank=True, null=True)
+
     smoothie = models.ForeignKey(SmoothieMenu, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.FloatField()  # how much of the ingredient is used per order

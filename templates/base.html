@@ -104,7 +104,7 @@
 <body>
 <header>
     <div class="header-container">
-        <h1 class="header-title"><a href="/">Shooties! Management System</a></h1>
+        <h1 class="header-title"><a href="/">Shooties! {% if request.user.is_authenticated and request.user.store %}{{ request.user.store.name }}{% else %}Management System{% endif %}</a></h1>
         <nav>
             <a href="/inventory">Inventory</a>
             <a href="/sales">Sales</a>

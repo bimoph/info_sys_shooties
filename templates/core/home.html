@@ -2,7 +2,7 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<h2>Welcome, {{ role|title }}!</h2>
+<h2>Welcome, {% if request.user.is_authenticated and request.user.store %}{{ request.user.store.name }}{% else %}User{% endif %}!</h2>
 
 <ul style="list-style: none; padding: 0;">
   

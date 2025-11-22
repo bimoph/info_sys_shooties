@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def home(request):
-    user_role = request.user.role
+    user_role = request.user.store
     return render(request, 'core/home.html', {'role': user_role})
 
 def no_permission(request):

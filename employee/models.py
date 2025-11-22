@@ -1,11 +1,14 @@
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
+from core.models import Store
 
 class Employee(models.Model):
     name = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='employee_photos/', blank=True, null=True)
     daily_salary = models.PositiveIntegerField()
+    # stores = models.ManyToManyField(Store, related_name='employees', blank=True)
+
     # current_balance = models.PositiveIntegerField(default=0
 
     def __str__(self):
@@ -14,6 +17,7 @@ class Employee(models.Model):
 
 class Attendance(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, null=True, blank=True)
     check_in = models.DateTimeField()
     check_out = models.DateTimeField(null=True, blank=True)
 
