@@ -29,32 +29,42 @@ def view_order(request):
     # Start & end of today in Jakarta time
     start_of_day = datetime.combine(now_jakarta.date(), time.min).replace(tzinfo=jakarta_tz)
     end_of_day = datetime.combine(now_jakarta.date(), time.max).replace(tzinfo=jakarta_tz)
+    print(request.user.role)
+    # If user is Admin → do NOT filter by store
+    if request.user.role == "admin":
+        base_filter = {
+            "created_at__range": (start_of_day, end_of_day)
+        }
+    else:
+        base_filter = {
+            "store": request.user.store,
+            "created_at__range": (start_of_day, end_of_day)
+        }
 
-    # Filter by date range for all types
     pending_orders = Order.objects.filter(
         is_ready=False,
         is_served=False,
-        created_at__range=(start_of_day, end_of_day)
+        **base_filter
     ).order_by('created_at')
 
     ready_orders = Order.objects.filter(
         is_ready=True,
         is_served=False,
-        created_at__range=(start_of_day, end_of_day)
+        **base_filter
     ).order_by('ready_at')
 
     served_orders = Order.objects.filter(
         is_served=True,
-        created_at__range=(start_of_day, end_of_day)
+        **base_filter
     ).order_by('served_at')
 
-    context = {
+    return render(request, 'sales/orders.html', {
         'pending_orders': pending_orders,
         'ready_orders': ready_orders,
         'served_orders': served_orders,
         'role': request.user.role,
-    }
-    return render(request, 'sales/orders.html', context)
+    })
+
 
 @require_POST
 @login_required
@@ -85,9 +95,11 @@ def move_to_pending(request, order_id):
 @login_required
 def move_to_ready(request, order_id):
     order = get_object_or_404(Order, id=order_id)
+    jakarta_tz = pytz.timezone("Asia/Jakarta")
+    # now_jakarta = timezone.now().astimezone(jakarta_tz)
     order.is_ready = True
     order.is_served = False
-    order.ready_at = timezone.now()
+    order.ready_at = timezone.now().astimezone(jakarta_tz)
     order.served_at = None
     order.save()
     return HttpResponse(status=204)
@@ -98,7 +110,7 @@ def order_list(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
 
-    orders = Order.objects.all()
+    orders = Order.objects.filter(store=request.user.store)
 
     if start_date_str:
         start_date = parse_date(start_date_str)
@@ -155,7 +167,7 @@ def delete_order(request, order_id):
 
 @login_required
 def create_order(request):
-    smoothies = SmoothieMenu.objects.all()
+    smoothies = SmoothieMenu.objects.filter(stores=request.user.store)
     if request.method == 'POST':
         form = OrderForm(request.POST)
         print("POST received:", request.POST)
@@ -193,7 +205,9 @@ def create_order(request):
                 order.customer = None
                 order.name = new_name or 'Guest'
 
-            order.created_at = timezone.now()
+            jakarta_tz = pytz.timezone("Asia/Jakarta")
+            order.created_at = timezone.now().astimezone(jakarta_tz)
+            order.store = request.user.store
             order.total_price = 0
             order.save()
 

@@ -2,11 +2,14 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 from core.models import Store
+from sales.models import Order, OrderItem
+from django.db.models import Sum
 
 class Employee(models.Model):
     name = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='employee_photos/', blank=True, null=True)
     daily_salary = models.PositiveIntegerField()
+
     # stores = models.ManyToManyField(Store, related_name='employees', blank=True)
 
     # current_balance = models.PositiveIntegerField(default=0
@@ -35,15 +38,43 @@ class Attendance(models.Model):
         return 0
 
     def salary_earned(self):
+        # --- BASE SALARY LOGIC (your original rules) ---
         hours = self.duration_in_hours()
         full_day = self.employee.daily_salary
+        print(f"Calculating salary for {self.employee.name} with {full_day} daily salary.")
         if hours >= 9:
-            return full_day
+            base_salary = full_day
         elif hours >= 8.5:
-            return full_day - 10000
+            base_salary = full_day - 10000
         elif hours >= 5:
-            return full_day // 2
-        return 0
+            base_salary = full_day // 2
+        else:
+            base_salary = 0
+
+        # --- SALES CALCULATION ---
+        # Get the date of the attendance
+        attendance_date = self.check_in.date()
+        print(f"Attendance date: {attendance_date}")
+        print(f"Employee's store: {self.store}")
+        
+        # Get all orders for this store on this date
+        orders = Order.objects.filter(
+            store=self.store,
+            served_at__date=attendance_date
+        )
+
+        # Sum quantities via OrderItem
+        total_cups = OrderItem.objects.filter(
+            order__in=orders
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        print(f"Total cups sold on {attendance_date} at store {self.store}: {total_cups}")
+        # --- BONUS RULES ---
+        bonus = 0
+        if total_cups > 100:
+            bonus += 30000  # base bonus
+            bonus += (total_cups - 100) * 1000  # extra per cup
+
+        return base_salary + bonus
 
     def __str__(self):
         return f"{self.employee.name} - {self.check_in.date()}"

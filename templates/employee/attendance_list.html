@@ -210,6 +210,16 @@ table.attendance-table tbody tr:hover {
       {% endfor %}
     </select>
 
+    <label for="store">Filter by Store:</label>
+    <select name="store" id="store">
+        <option value="">All Stores</option>
+        {% for s in stores %}
+            <option value="{{ s.id }}" {% if request.GET.store == s.id|stringformat:"s" %}selected{% endif %}>
+                {{ s.name }}
+            </option>
+        {% endfor %}
+    </select>
+
     <label for="start-date">Start Date:</label>
     <input type="date" id="start-date" name="start_date" value="{{ start_date }}">
 
@@ -244,6 +254,7 @@ table.attendance-table tbody tr:hover {
           <th scope="col">Select</th>
           {% endif %}  
           <th scope="col">Employee</th>
+          <th scope="row">Store</th>
           <th scope="col">Check In</th>
           <th scope="col">Check Out</th>
           <th scope="col">Hours Worked</th>
@@ -263,6 +274,7 @@ table.attendance-table tbody tr:hover {
           {% endif %}  
           
           <td>{{ record.employee.name }}</td>
+          <td>{{ record.store.name }}</td>
           <td>{{ record.check_in }}</td>
           <td>{{ record.check_out|default:"-" }}</td>
           <td>{{ record.hours_worked }}</td>
