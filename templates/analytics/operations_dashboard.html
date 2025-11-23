@@ -140,6 +140,16 @@
   
 
   <form method="get" class="filters" aria-label="Filter operations data">
+    <label for="store">Store:</label>
+        <select name="store" id="store">
+            <option value="">-- All Stores --</option>
+            {% for s in stores %}
+            <option value="{{ s.id }}"
+                {% if request.GET.store|default_if_none:""|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>
+                {{ s.name }}
+            </option>
+            {% endfor %}
+    </select>
     <label for="start_date">Start Date:
       <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
     </label>

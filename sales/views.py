@@ -170,7 +170,10 @@ def create_order(request):
     smoothies = SmoothieMenu.objects.filter(stores=request.user.store)
     if request.method == 'POST':
         form = OrderForm(request.POST)
+        print("POST received:", request.POST)
+        print("Form errors:", form.errors)
         if form.is_valid():
+            print('order valid')
             order = form.save(commit=False)
 
             customer_id = request.POST.get('selected_customer_id', '').strip()
@@ -236,8 +239,10 @@ def create_order(request):
 
             order.total_price = total_price
             order.save()
+            print('ok order masuk')
             return redirect('view_order')
     else:
+        print('order invalidd')
         form = OrderForm()
 
     customers = Customer.objects.all()
