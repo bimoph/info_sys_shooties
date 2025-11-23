@@ -6,6 +6,7 @@ import pytz
 
 from django.shortcuts import render
 from django.db.models import Sum
+from core.models import Store
 from sales.models import Order, OrderItem
 from inventory.models import SmoothieMenu, Ingredient, StockEntry
 from core.decorators import role_required
@@ -22,9 +23,15 @@ def analytics_dashboard(request):
     end_date = request.GET.get('end_date')
     menu_ids = request.GET.getlist('menu')  # list of ids as strings
     time_division = request.GET.get('time_division')  # morning/lunch/after_lunch/afternoon
+    store_id = request.GET.get('store')  # store id or None
+
 
     # --- Base queryset filtered by date & menu (DB-level) ---
-    orders_qs = Order.objects.filter(store=request.user.store)
+    orders_qs = Order.objects.all()
+
+    if store_id:                     # if user selects a store
+        orders_qs = orders_qs.filter(store_id=store_id)
+
     if start_date:
         orders_qs = orders_qs.filter(created_at__date__gte=start_date)
     if end_date:
@@ -90,10 +97,10 @@ def analytics_dashboard(request):
     payment_agg = (
         Order.objects
         .filter(id__in=order_ids)
-        .values('payment_method')
+        .values('payment_method__name')
         .annotate(total=Sum('total_price'))
     )
-    payment_labels = [p['payment_method'] for p in payment_agg]
+    payment_labels = [p['payment_method__name'] for p in payment_agg]
     payment_totals = [p['total'] for p in payment_agg]
 
     # --- Cups sold by time division (use Jakarta local times) ---
@@ -113,6 +120,38 @@ def analytics_dashboard(request):
                 count += item.quantity
         division_cups.append(count)
 
+    # --- Average daily sales and cups ---
+    num_days = len(all_dates) if all_dates else 1  # avoid division by zero
+    average_daily_sales = sum(sales_data_rp) / num_days
+    total_sales =  sum(sales_data_rp)
+    average_daily_cups = sum(cups_data) / num_days
+    total_cups = sum(cups_data)
+    
+    # --- Menu ranking with percentage contribution ---
+    menu_total_cups = sum([m['total'] for m in menu_agg]) or 1  # avoid zero division
+    menu_ranking = []
+    for i, m in enumerate(menu_agg, start=1):
+        pct = (m['total'] / menu_total_cups) * 100
+        menu_ranking.append({
+            'rank': i,
+            'name': m['smoothie__name'],
+            'quantity': m['total'],
+            'percentage': round(pct, 1)  # one decimal place
+        })
+
+    # --- Payment ranking with percentage contribution ---
+    payment_total_tx = sum([p['total'] for p in payment_agg]) or 1
+    payment_ranking = []
+    for i, p in enumerate(payment_agg, start=1):
+        pct = (p['total'] / payment_total_tx) * 100
+        payment_ranking.append({
+            'rank': i,
+            'name': p['payment_method__name'],
+            'total': p['total'],
+            'percentage': round(pct, 1)
+        })
+
+
     # --- JSON-encode lists for Chart.js usage in template ---
     ctx = {
         'menus': SmoothieMenu.objects.all(),
@@ -129,6 +168,13 @@ def analytics_dashboard(request):
         'time_division_selected': time_division or "",
         'start_date': start_date or "",
         'end_date': end_date or "",
+        'stores': Store.objects.all(),
+        'average_daily_sales': average_daily_sales,
+        'average_daily_cups': average_daily_cups,
+        'total_sales' : total_sales,
+        'total_cups' : total_cups,
+        'menu_ranking': menu_ranking,
+        'payment_ranking': payment_ranking
     }
     return render(request, 'analytics/dashboard.html', ctx)
 
@@ -166,6 +212,7 @@ def operations_dashboard(request):
     end_date = parse_date_param(request.GET.get('end_date'))
     menu_ids = request.GET.getlist('menu')               # list of strings
     time_division = request.GET.get('time_division')    # morning/lunch/after_lunch/afternoon
+    store_id = request.GET.get('store')  # store id or None
 
     # Stock snapshot date (independent)
     stock_date = parse_date_param(request.GET.get('stock_date'))
@@ -173,7 +220,11 @@ def operations_dashboard(request):
         stock_date = datetime.now(JKT).date()
 
     # --- Build base orders queryset based on DB filters (date & menu) ---
-    orders_qs = Order.objects.filter(store=request.user.store)
+     # --- Base queryset filtered by date & menu (DB-level) ---
+    orders_qs = Order.objects.all()
+
+    if store_id:                     # if user selects a store
+        orders_qs = orders_qs.filter(store_id=store_id)
     if start_date:
         orders_qs = orders_qs.filter(created_at__date__gte=start_date)
     if end_date:
@@ -304,6 +355,7 @@ def operations_dashboard(request):
 
     # --- Context for template ---
     context = {
+        'stores': Store.objects.all(),
         'menus': SmoothieMenu.objects.all(),
         'selected_menus': menu_ids,
         'start_date': start_date.isoformat() if start_date else "",

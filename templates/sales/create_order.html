@@ -76,7 +76,11 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
     <!-- LEFT: menu list -->
     <div>
       <label for="id_name">Customer Name:</label>
-      <input type="text" name="name" id="id_name" placeholder="Customer or guest name">
+      <!-- <input required type="text" name="name" id="id_name" placeholder="Customer or guest name"> -->
+      <input required type="text" name="name" id="id_name" placeholder="Customer or guest name"
+       oninvalid="this.setCustomValidity('Customer name is required')"
+       oninput="this.setCustomValidity('')">
+
 
       <label for="phone_display" style="margin-top:8px;">Phone (Member Only):</label>
       <input type="tel" id="phone_display" name="phone_display" readonly placeholder="Select or create member to autofill">
@@ -429,6 +433,10 @@ const csrftoken = getCookie('csrftoken');
     cancelCustomerBtn.style.display = 'inline-block';
   }
 
+//   document.getElementById('id_payment_method').addEventListener('change', function() {
+//     submitBtn.disabled = this.value === "" || parseInt(totalHidden.value) <= 0;
+//   });
+
   // Cancel selected customer
   cancelCustomerBtn.addEventListener('click', () => {
     selectedCustomerWrap.style.display = 'none';
@@ -442,21 +450,128 @@ const csrftoken = getCookie('csrftoken');
     document.getElementById('new_phone').value = '';
     cancelCustomerBtn.style.display = 'none';
   });
+  'use strict';
 
-  // Form submit validation: ensure at least one item selected and total > 0
-  document.getElementById('orderForm').addEventListener('submit', function(e){
-    if (parseInt(totalHidden.value || 0) <= 0) {
-      e.preventDefault();
-      alert('Please add at least one item to the order.');
-      return false;
-    }
-    // server will also check duplicates and handle gracefully
+// Helper: safe get element
+function $id(id) { return document.getElementById(id); }
+
+// Elements (may be null if template changed)
+const form = $id('orderForm');
+// const submitBtn = $id('submitBtn');
+const nameField = $id('id_name');
+const paymentField = $id('id_payment_method');
+// const totalHidden = $id('total_price_hidden');
+
+// if any required element missing, bail gracefully
+if (!form || !submitBtn) return;
+
+// Utility: trigger shake on an element
+function triggerShake(el) {
+  if (!el) return;
+  // remove class if exists to restart animation
+  el.classList.remove('shake');
+  el.classList.remove('shake--error');
+  // force reflow to restart animation
+  // eslint-disable-next-line no-unused-expressions
+  void el.offsetWidth;
+  el.classList.add('shake', 'shake--error');
+
+  // remove after animation ends so it can be retriggered later
+  function cleanup() {
+    el.classList.remove('shake');
+    el.classList.remove('shake--error');
+    el.removeEventListener('animationend', cleanup);
+  }
+  el.addEventListener('animationend', cleanup);
+}
+
+// Validate function — returns { ok: boolean, firstInvalid: DOMElement|null, message: string|null }
+function validateForm() {
+  const total = totalHidden ? parseInt(totalHidden.value || '0', 10) : 0;
+  const nameVal = nameField ? nameField.value.trim() : '';
+  const paymentVal = paymentField ? paymentField.value : '';
+
+  if (!nameVal) {
+    return { ok: false, firstInvalid: nameField, message: 'Customer name is required.' };
+  }
+  if (!paymentVal) {
+    return { ok: false, firstInvalid: paymentField, message: 'Please select a payment method.' };
+  }
+  if (total <= 0) {
+    return { ok: false, firstInvalid: null, message: 'Please add at least one item to the cart.' };
+  }
+  return { ok: true, firstInvalid: null, message: null };
+}
+
+// Update submit button enabled state (enable only when all fields ok)
+function updateSubmitAvailability() {
+  const total = totalHidden ? parseInt(totalHidden.value || '0', 10) : 0;
+  const nameOk = nameField ? nameField.value.trim() !== '' : true;
+  const paymentOk = paymentField ? paymentField.value !== '' : true;
+  const ready = nameOk && paymentOk && total > 0;
+  submitBtn.disabled = !ready;
+  submitBtn.style.opacity = ready ? '1' : '0.6';
+}
+
+// Wire listeners that can change validation state
+if (nameField) nameField.addEventListener('input', updateSubmitAvailability);
+if (paymentField) paymentField.addEventListener('change', updateSubmitAvailability);
+if (totalHidden) {
+  // if your code updates totalHidden via JS, ensure updateSubmitAvailability is called after
+  // We'll listen to DOMSubtreeModified as a last-resort fallback (not ideal but safe)
+  totalHidden.addEventListener('change', updateSubmitAvailability);
+}
+
+// Also call once at init
+updateSubmitAvailability();
+
+// On form submit: validate, shake, focus invalid
+form.addEventListener('submit', function (ev) {
+  const result = validateForm();
+  if (result.ok) {
+    // allow submit
+    return;
+  }
+
+  // prevent submission
+  ev.preventDefault();
+
+  // If there's a field to focus, focus it
+  if (result.firstInvalid && typeof result.firstInvalid.focus === 'function') {
+    // small visual cue: shake the submit button and focus the field
+    triggerShake(submitBtn);
+    // set a short timeout so user sees the shake first
+    setTimeout(function () {
+      result.firstInvalid.focus();
+    }, 150);
+  } else {
+    // nothing to focus (cart empty), shake the button
+    triggerShake(submitBtn);
+  }
+
+  // show friendly error (you can replace this with inline message later)
+  if (result.message) {
+    // use setTimeout so the alert doesn't interrupt the shake's initial visual
+    setTimeout(function () { alert(result.message); }, 220);
+  }
+}, { passive: false });
+
+// Also improve UX: when payment changes, update submit availability and remove any previous errors
+if (paymentField) {
+  paymentField.addEventListener('change', function () {
+    updateSubmitAvailability();
   });
+}
+
+// If quantities change elsewhere in your JS, make sure updateSubmitAvailability() is called
+// For safety, expose it on window (so other scripts can call it)
+window._updateOrderSubmitState = updateSubmitAvailability;
 
   // Prevent accidental number scroll changes
   document.querySelectorAll('.smoothie-qty').forEach(input => {
     input.addEventListener('wheel', (ev) => ev.target.blur());
   });
+  
 
 })();
 </script>

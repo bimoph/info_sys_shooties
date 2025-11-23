@@ -4,238 +4,288 @@
 
 {% block extra_css %}
 <style>
-  .page-container {
-    max-width: 960px;
-    margin: 40px auto 60px;
-    padding: 0 20px;
-    font-family: Arial, sans-serif;
-  }
-  h2 {
-    font-weight: 700;
-    font-size: 28px;
-    margin-bottom: 24px;
-    color: #222;
-  }
-  form.filter-form {
-    background: #fff;
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin-bottom: 30px;
-    box-shadow: 0 0 12px rgb(0 0 0 / 0.1);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    align-items: center;
-  }
-  form.filter-form label {
-    font-weight: 600;
-    margin-right: 8px;
-  }
-  form.filter-form input[type="date"],
-  form.filter-form select {
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 15px;
-    min-width: 140px;
-  }
-  form.filter-form fieldset {
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 10px 14px;
-    max-width: 400px;
-    flex-grow: 1;
-  }
-  form.filter-form fieldset legend {
-    font-weight: 600;
-  }
-  form.filter-form fieldset label {
-    display: inline-block;
-    margin-right: 15px;
-    font-weight: normal;
-    cursor: pointer;
-  }
-  form.filter-form button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    min-width: 100px;
-  }
-  form.filter-form button:hover {
-    background-color: #0056b3;
-  }
+    .page-container {
+        max-width: 960px;
+        margin: 40px auto 60px;
+        padding: 0 20px;
+        font-family: Arial, sans-serif;
+    }
 
-  .charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 24px;
-    margin-bottom: 40px;
-  }
+    h2 {
+        font-weight: 700;
+        font-size: 28px;
+        margin-bottom: 24px;
+        color: #222;
+    }
 
-  .chart-box {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 3px 8px rgb(0 0 0 / 0.1);
-    padding: 20px;
-  }
+    form.filter-form {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px 24px;
+        margin-bottom: 30px;
+        box-shadow: 0 0 12px rgb(0 0 0 / 0.1);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+    }
 
-  canvas {
-    /* Ensure canvas fills container width */
-    width: 100% !important;
-    height: 300px !important;
-  }
+    form.filter-form label {
+        font-weight: 600;
+        margin-right: 8px;
+    }
+
+    form.filter-form input[type="date"],
+    form.filter-form select {
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 15px;
+        min-width: 140px;
+    }
+
+    form.filter-form fieldset {
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 10px 14px;
+        max-width: 400px;
+        flex-grow: 1;
+    }
+
+    form.filter-form fieldset legend {
+        font-weight: 600;
+    }
+
+    form.filter-form fieldset label {
+        display: inline-block;
+        margin-right: 15px;
+        font-weight: normal;
+        cursor: pointer;
+    }
+
+    form.filter-form button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        min-width: 100px;
+    }
+
+    form.filter-form button:hover {
+        background-color: #0056b3;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+
+    .chart-box {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 8px rgb(0 0 0 / 0.1);
+        padding: 20px;
+    }
+
+    canvas {
+        /* Ensure canvas fills container width */
+        width: 100% !important;
+        height: 300px !important;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-container" role="main" aria-labelledby="page-title">
-  <div class="page-container" role="main" aria-labelledby="page-title" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-    <h2 id="page-title">Sales Analytics Dashboard</h2>
-    <a href="{% url 'operations_dashboard' %}" class="btn btn-primary" style="white-space: nowrap; font-weight: 600; padding: 8px 18px;">Operations Dashboard -></a>
-  </div>
+    <div class="page-container" role="main" aria-labelledby="page-title"
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+        <h2 id="page-title">Sales Analytics Dashboard</h2>
+        <a href="{% url 'operations_dashboard' %}" class="btn btn-primary"
+            style="white-space: nowrap; font-weight: 600; padding: 8px 18px;">Operations Dashboard -></a>
+    </div>
 
 
-  <form method="get" class="filter-form" aria-label="Filter sales analytics data">
-    <label for="start_date">Start Date:</label>
-    <input type="date" name="start_date" id="start_date" value="{{ request.GET.start_date }}">
+    <form method="get" class="filter-form" aria-label="Filter sales analytics data">
+        <label for="store">Store:</label>
+        <select name="store" id="store">
+            <option value="">-- All Stores --</option>
+            {% for s in stores %}
+            <option value="{{ s.id }}"
+                {% if request.GET.store|default_if_none:""|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>
+                {{ s.name }}
+            </option>
+            {% endfor %}
+        </select>
+        
+        <label for="start_date">Start Date:</label>
+        <input type="date" name="start_date" id="start_date" value="{{ request.GET.start_date }}">
 
-    <label for="end_date">End Date:</label>
-    <input type="date" name="end_date" id="end_date" value="{{ request.GET.end_date }}">
+        <label for="end_date">End Date:</label>
+        <input type="date" name="end_date" id="end_date" value="{{ request.GET.end_date }}">
 
-    <fieldset>
-      <legend>Filter by Menu</legend>
-      {% for menu in menus %}
-      <label>
-        <input type="checkbox" name="menu" value="{{ menu.id }}"
-          {% if menu.id|stringformat:"s" in selected_menus %}checked{% endif %}>
-        {{ menu.name }}
-      </label>
-      {% endfor %}
-    </fieldset>
+        <fieldset>
+            <legend>Filter by Menu</legend>
+            {% for menu in menus %}
+            <label>
+                <input type="checkbox" name="menu" value="{{ menu.id }}" {% if menu.id|stringformat:"s" in selected_menus %}checked{% endif %}>
+                {{ menu.name }}
+            </label>
+            {% endfor %}
+        </fieldset>
+        
 
-    <label for="time_division">Time Division:</label>
-    <select name="time_division" id="time_division">
-      <option value="">-- All --</option>
-      <option value="morning" {% if request.GET.time_division == "morning" %}selected{% endif %}>Morning (09-11)</option>
-      <option value="lunch" {% if request.GET.time_division == "lunch" %}selected{% endif %}>Lunch (11-13)</option>
-      <option value="after_lunch" {% if request.GET.time_division == "after_lunch" %}selected{% endif %}>After Lunch (13-15)</option>
-      <option value="afternoon" {% if request.GET.time_division == "afternoon" %}selected{% endif %}>Afternoon (15-18)</option>
-    </select>
+        <label for="time_division">Time Division:</label>
+        <select name="time_division" id="time_division">
+            <option value="">-- All --</option>
+            <option value="morning" {% if request.GET.time_division == "morning" %}selected{% endif %}>Morning (09-11)</option>
+            <option value="lunch" {% if request.GET.time_division == "lunch" %}selected{% endif %}>Lunch (11-13)</option>
+            <option value="after_lunch" {% if request.GET.time_division == "after_lunch" %}selected{% endif %}>After Lunch (13-15)</option>
+            <option value="afternoon" {% if request.GET.time_division == "afternoon" %}selected{% endif %}>Afternoon (15-18)</option>
+        </select>
 
-    <button type="submit" aria-label="Apply filters">Filter</button>
-  </form>
 
-  <div class="charts-grid" aria-live="polite" aria-relevant="additions removals">
-    <section class="chart-box" aria-label="Sales over time bar chart">
-      <canvas id="salesChart" role="img" aria-describedby="salesChartDesc"></canvas>
-      <p id="salesChartDesc" class="visually-hidden">Bar chart showing sales amount in rupiah over time.</p>
-    </section>
 
-    <section class="chart-box" aria-label="Cups sold over time bar chart">
-      <canvas id="cupsChart" role="img" aria-describedby="cupsChartDesc"></canvas>
-      <p id="cupsChartDesc" class="visually-hidden">Bar chart showing number of cups sold over time.</p>
-    </section>
+        <button type="submit" aria-label="Apply filters">Filter</button>
+    </form>
 
-    <section class="chart-box" aria-label="Menu sales distribution pie chart">
-      <canvas id="menuPie" role="img" aria-describedby="menuPieDesc"></canvas>
-      <p id="menuPieDesc" class="visually-hidden">Pie chart showing sales distribution by menu items.</p>
-    </section>
+    <div class="charts-grid" aria-live="polite" aria-relevant="additions removals">
+        {% load humanize %}
 
-    <section class="chart-box" aria-label="Payment methods distribution pie chart">
-      <canvas id="paymentPie" role="img" aria-describedby="paymentPieDesc"></canvas>
-      <p id="paymentPieDesc" class="visually-hidden">Pie chart showing distribution of payment methods.</p>
-    </section>
+        <section class="chart-box" aria-label="Sales over time bar chart">
+            <p style="font-weight: 600; margin-bottom: 8px;">
+                Total Sales: Rp {{ total_sales|floatformat:0|intcomma }}
+            </p>
+            <p style="font-weight: 600; margin-bottom: 8px;">
+                Average Daily Sales: Rp {{ average_daily_sales|floatformat:0|intcomma }}
+            </p>
+            <canvas id="salesChart" role="img" aria-describedby="salesChartDesc"></canvas>
+            <p id="salesChartDesc" class="visually-hidden">Bar chart showing sales amount in rupiah over time.</p>
+        </section>
 
-    <section class="chart-box" aria-label="Cups sold by time division bar chart" style="grid-column: 1 / -1;">
-      <canvas id="divisionChart" role="img" aria-describedby="divisionChartDesc"></canvas>
-      <p id="divisionChartDesc" class="visually-hidden">Bar chart showing cups sold by time division.</p>
-    </section>
-  </div>
+        <section class="chart-box" aria-label="Cups sold over time bar chart">
+            <p style="font-weight: 600; margin-bottom: 8px;">
+                Total Cups Sold: Rp {{ total_cups|floatformat:0|intcomma }}
+            </p>
+            <p style="font-weight: 600; margin-bottom: 8px;">
+                Average Daily Cups Sold: {{ average_daily_cups|floatformat:0 }}
+            </p>
+            <canvas id="cupsChart" role="img" aria-describedby="cupsChartDesc"></canvas>
+            <p id="cupsChartDesc" class="visually-hidden">Bar chart showing number of cups sold over time.</p>
+        </section>
+
+        <section class="chart-box" aria-label="Menu sales distribution pie chart">
+            <canvas id="menuPie" role="img" aria-describedby="menuPieDesc"></canvas>
+            <p id="menuPieDesc" class="visually-hidden">Pie chart showing sales distribution by menu items.</p>
+            <p style="font-weight: 600; margin-bottom: 8px;">Top Menu Sales:</p>
+            <ol>
+                {% for m in menu_ranking %}
+                <li>{{ m.name }}: {{ m.quantity }} cups, contributed to {{ m.percentage }}%</li>
+                {% endfor %}
+            </ol>
+        </section>
+
+        <section class="chart-box" aria-label="Payment methods distribution pie chart">
+            <canvas id="paymentPie" role="img" aria-describedby="paymentPieDesc"></canvas>
+            <p id="paymentPieDesc" class="visually-hidden">Pie chart showing distribution of payment methods.</p>
+            <p style="font-weight: 600; margin-bottom: 8px;">Top Payment Methods:</p>
+            <ol>
+                {% for p in payment_ranking %}
+                <li>{{ p.name }}: Rp{{ p.total|floatformat:0|intcomma }}, contributed to {{ p.percentage }}%</li>
+                {% endfor %}
+            </ol>
+        </section>
+
+        <section class="chart-box" aria-label="Cups sold by time division bar chart" style="grid-column: 1 / -1;">
+            <canvas id="divisionChart" role="img" aria-describedby="divisionChartDesc"></canvas>
+            <p id="divisionChartDesc" class="visually-hidden">Bar chart showing cups sold by time division.</p>
+        </section>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  new Chart(document.getElementById('salesChart'), {
-    type: 'bar',
-    data: {
-      labels: {{ sales_labels|safe }},
-      datasets: [{
-        label: 'Sales (Rp)',
-        data: {{ sales_data_rp|safe }},
+    new Chart(document.getElementById('salesChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ sales_labels| safe }},
+        datasets: [{
+            label: 'Sales (Rp)',
+            data: {{ sales_data_rp| safe }},
         backgroundColor: 'rgba(75,192,192,0.6)'
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
     }
   });
 
-  new Chart(document.getElementById('cupsChart'), {
-    type: 'bar',
-    data: {
-      labels: {{ sales_labels|safe }},
-      datasets: [{
-        label: 'Cups Sold',
-        data: {{ cups_data|safe }},
+    new Chart(document.getElementById('cupsChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ sales_labels| safe }},
+        datasets: [{
+            label: 'Cups Sold',
+            data: {{ cups_data| safe }},
         backgroundColor: 'rgba(153,102,255,0.6)'
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
     }
   });
 
-  new Chart(document.getElementById('menuPie'), {
-    type: 'pie',
-    data: {
-      labels: {{ menu_labels|safe }},
-      datasets: [{
-        label: 'Menu Sales',
-        data: {{ menu_cups|safe }},
-        backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF']
+    new Chart(document.getElementById('menuPie'), {
+        type: 'pie',
+        data: {
+            labels: {{ menu_labels| safe }},
+        datasets: [{
+            label: 'Menu Sales',
+            data: {{ menu_cups| safe }},
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
     }
   });
 
-  new Chart(document.getElementById('paymentPie'), {
-    type: 'pie',
-    data: {
-      labels: {{ payment_labels|safe }},
-      datasets: [{
-        label: 'Payment Methods',
-        data: {{ payment_totals|safe }},
-        backgroundColor: ['#FF6384','#36A2EB','#FFCE56']
+    new Chart(document.getElementById('paymentPie'), {
+        type: 'pie',
+        data: {
+            labels: {{ payment_labels| safe }},
+        datasets: [{
+            label: 'Payment Methods',
+            data: {{ payment_totals| safe }},
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
     }
   });
 
-  new Chart(document.getElementById('divisionChart'), {
-    type: 'bar',
-    data: {
-      labels: {{ division_labels|safe }},
-      datasets: [{
-        label: 'Cups Sold by Time Division',
-        data: {{ division_cups|safe }},
+    new Chart(document.getElementById('divisionChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ division_labels| safe }},
+        datasets: [{
+            label: 'Cups Sold by Time Division',
+            data: {{ division_cups| safe }},
         backgroundColor: 'rgba(255,159,64,0.6)'
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
     }
   });
 </script>
