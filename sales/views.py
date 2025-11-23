@@ -57,12 +57,21 @@ def view_order(request):
         is_served=True,
         **base_filter
     ).order_by('served_at')
+    # --- New: Aggregate pending quantities per menu ---
+    pending_items_summary = (
+        OrderItem.objects
+        .filter(order__in=pending_orders)
+        .values('smoothie__name')
+        .annotate(pending_qty=Sum('quantity'))
+        .order_by('-pending_qty')
+    )
 
     return render(request, 'sales/orders.html', {
         'pending_orders': pending_orders,
         'ready_orders': ready_orders,
         'served_orders': served_orders,
         'role': request.user.role,
+        'pending_items_summary' : pending_items_summary,
     })
 
 

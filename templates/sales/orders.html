@@ -16,7 +16,16 @@
     </div>
 </div>
 
-<h3>Pending Orders</h3>
+<h3 style="display:flex; align-items:center; gap:12px;">
+    Pending Orders ||
+    {% if pending_items_summary %}
+    <div class="pending-summary" style="display:flex; flex-wrap:wrap; gap:12px; font-weight:600;">
+        {% for item in pending_items_summary %}
+        <span>• {{ item.smoothie__name }}:  {{ item.pending_qty }} cup{% if item.pending_qty > 1 %}s{% endif %}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</h3>
 <div class="table-container">
     <table>
         {% include "sales/partials/order_table.html" with orders=pending_orders table_type="pending" %}
