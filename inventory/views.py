@@ -8,14 +8,14 @@ from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
 import csv
-
+import pytz
 
 
 
 
 @login_required
 def inventory_dashboard(request):
-    ingredients = Ingredient.objects.all()
+    ingredients = Ingredient.objects.filter(store=request.user.store)
     # low_stock = ingredients.filter(quantity_in_stock__lt=5)  # ✅ fixed threshold
     return render(request, 'inventory/dashboard.html', {
         'ingredients': ingredients,
@@ -29,7 +29,9 @@ def add_stock(request):
         if form.is_valid():
             entry = form.save(commit=False)
             entry.reason = 'manual_add'
-            entry.timestamp = timezone.now()
+            jakarta_tz = pytz.timezone("Asia/Jakarta")
+            now_jakarta = timezone.now().astimezone(jakarta_tz)
+            entry.timestamp = now_jakarta
             entry.save()
 
             # Update actual stock
@@ -55,7 +57,9 @@ def ingredient_create(request):
     if request.method == 'POST':
         form = IngredientForm(request.POST)
         if form.is_valid():
-            form.save()
+            ingredient = form.save(commit=False)   # don't save yet
+            ingredient.store = request.user.store  # assign store
+            ingredient.save()                      # now save
             return redirect('inventory_dashboard')
     else:
         form = IngredientForm()
@@ -139,7 +143,7 @@ def stockentry_delete(request, pk):
 # Smoothie Menu Views
 @login_required
 def smoothie_menu_list(request):
-    smoothies = SmoothieMenu.objects.all()
+    smoothies = SmoothieMenu.objects.filter(stores=request.user.store)
     return render(request, 'inventory/smoothie_menu_list.html', {'smoothies': smoothies, 'role': request.user.role,})
 
 @login_required
@@ -156,11 +160,21 @@ def create_smoothie_menu(request):
     if request.method == 'POST':
         form = SmoothieMenuForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('smoothie_menu_list')  # or your success URL
+            smoothie = form.save(commit=False)   # create object but don't save M2M yet
+            smoothie.save()                      # save first (required before adding M2M)
+            
+            # Automatically assign the store of the logged in user
+            smoothie.stores.add(request.user.store)
+            
+            return redirect('smoothie_menu_list')
     else:
         form = SmoothieMenuForm()
-    return render(request, 'inventory/smoothie_menu_form.html', {'form': form, 'role': request.user.role,})
+
+    return render(
+        request,
+        'inventory/smoothie_menu_form.html',
+        {'form': form, 'role': request.user.role}
+    )
 
 @login_required
 def smoothie_detail(request, pk):

@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee, Attendance, Payroll
+from core.models import Store
 from django.utils.timezone import is_naive, make_aware, now
 from django.utils import timezone
 from datetime import datetime
@@ -23,12 +24,16 @@ def attendance_list(request):
     if user.role == 'cashier':
         records = Attendance.objects.select_related('employee').filter(check_in__date=today_jakarta, store=request.user.store).order_by('-check_in')
     else:
-        records = Attendance.objects.select_related('employee').filter(store=request.user.store).order_by('-check_in')
+        records = Attendance.objects.select_related('employee').order_by('-check_in')
 
     # Get filter values from request GET parameters
     employee_id = request.GET.get('employee')
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
+    # NEW: Filter by store
+    store_id = request.GET.get('store')
+    if store_id:
+        records = records.filter(store_id=store_id)
 
     # Filter by employee
     if employee_id:
@@ -83,6 +88,7 @@ def attendance_list(request):
         'records': records,
         'employees': Employee.objects.all(),
         'role': request.user.role,
+        'stores': Store.objects.all(),
     })
 
 
@@ -125,11 +131,14 @@ def pay_salary(request, pk):
 
 @login_required
 def check_in(request):
+    jakarta_tz = pytz.timezone('Asia/Jakarta')
+
     if request.method == 'POST':
         form = AttendanceCheckInForm(request.POST, request.FILES)
         if form.is_valid():
             attendance = form.save(commit=False)
-            attendance.check_in = timezone.now()
+            attendance.check_in = timezone.now().astimezone(jakarta_tz)
+            attendance.store = request.user.store
             attendance.save()
             return redirect('attendance_list')
     else:
@@ -138,12 +147,13 @@ def check_in(request):
 
 @login_required
 def check_out(request, attendance_id):
+    jakarta_tz = pytz.timezone('Asia/Jakarta')
     attendance = get_object_or_404(Attendance, id=attendance_id)
     if request.method == 'POST':
         form = AttendanceCheckOutForm(request.POST, request.FILES, instance=attendance)
         if form.is_valid():
             attendance = form.save(commit=False)
-            attendance.check_out = timezone.now()
+            attendance.check_out = timezone.now().astimezone(jakarta_tz)
 
             # Save uploaded check-out photo
             if 'check_out_photo' in request.FILES:
