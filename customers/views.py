@@ -4,6 +4,7 @@ from .forms import CustomerForm
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 from sales.models import Order
 from customers.utils import find_customer_by_phone, normalize_phone  # import helper
 from django.http import JsonResponse
@@ -89,6 +90,64 @@ def customer_spending_report(request):
         'start_date': start_date,
         'end_date': end_date,
         'role': request.user.role,
+    })
+
+
+def register_customer(request):
+    already_registered = False
+    existing_customer = None
+
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+        phone = request.POST.get('phone', '').strip()
+        existing = find_customer_by_phone(phone)
+
+        if existing:
+            already_registered = True
+            existing_customer = existing
+        elif form.is_valid():
+            customer = form.save()
+            return redirect(f"{reverse('member_profile', args=[customer.phone])}?welcome=1")
+    else:
+        form = CustomerForm()
+
+    return render(request, 'customers/register.html', {
+        'form': form,
+        'already_registered': already_registered,
+        'existing_customer': existing_customer,
+    })
+
+
+def member_profile(request, phone):
+    customer = get_object_or_404(Customer, phone=phone)
+    orders = customer.order_set.prefetch_related('orderitem_set__smoothie').order_by('-created_at')
+
+    total_orders = orders.count()
+    total_spent = sum(o.total_price for o in orders)
+    total_cups = sum(
+        item.quantity
+        for order in orders
+        for item in order.orderitem_set.all()
+    )
+
+    # Format total spent compactly (e.g. 150rb)
+    if total_spent >= 1_000_000:
+        total_spent_formatted = f"{total_spent / 1_000_000:.1f}jt"
+    elif total_spent >= 1_000:
+        total_spent_formatted = f"{int(total_spent / 1_000)}rb"
+    else:
+        total_spent_formatted = str(total_spent)
+
+    member_url = request.build_absolute_uri(reverse('member_profile', args=[customer.phone]))
+
+    return render(request, 'customers/member_profile.html', {
+        'customer': customer,
+        'orders': orders,
+        'total_orders': total_orders,
+        'total_spent_formatted': total_spent_formatted,
+        'total_cups': total_cups,
+        'welcome': request.GET.get('welcome') == '1',
+        'member_url': member_url,
     })
 
 

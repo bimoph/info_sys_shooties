@@ -14,5 +14,4 @@ urlpatterns = [
     path('check-phone/', views.check_phone, name='customers_check_phone'),
     path('create-ajax/', views.create_customer_ajax, name='customers_create_ajax'),
 
-
 ]

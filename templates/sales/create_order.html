@@ -44,6 +44,56 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 
 /* small inline feedback */
 .feedback { font-size:13px; color:#b02a37; margin-top:6px; }
+
+/* QR Scanner */
+.btn-scan {
+  width:100%; padding:10px; margin-bottom:10px;
+  background:#fff7ed; border:1.5px solid #ff8c00; color:#ff8c00;
+  border-radius:8px; font-weight:700; font-size:14px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+}
+.btn-scan:hover { background:#ff8c00; color:#fff; }
+.scanner-wrap {
+  display:none;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:10px;
+}
+.scanner-wrap.open { display:flex; }
+#qr-reader {
+  width:100%; border-radius:8px; overflow:hidden;
+  border:2px solid #ff8c00;
+  background:#000;
+}
+.btn-stop-scan {
+  padding:7px; background:#f0f0f0; border:none; border-radius:6px;
+  font-size:13px; font-weight:600; color:#555; cursor:pointer;
+}
+.btn-stop-scan:hover { background:#e0e0e0; }
+
+/* QR Confirm Step */
+.qr-confirm {
+  display:none;
+  background:#fff7ed;
+  border:1.5px solid #ff8c00;
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:10px;
+}
+.qr-confirm.open { display:block; }
+.qr-confirm-name { font-size:17px; font-weight:800; color:#1a1a1a; margin-bottom:2px; }
+.qr-confirm-phone { font-size:13px; color:#888; margin-bottom:12px; }
+.qr-confirm-actions { display:flex; gap:8px; }
+.btn-confirm-yes {
+  flex:1; padding:9px; background:#ff8c00; color:#fff;
+  border:none; border-radius:8px; font-weight:700; cursor:pointer;
+}
+.btn-confirm-yes:hover { background:#e07a00; }
+.btn-confirm-no {
+  flex:1; padding:9px; background:#f0f0f0; color:#555;
+  border:none; border-radius:8px; font-weight:700; cursor:pointer;
+}
+.btn-confirm-no:hover { background:#e0e0e0; }
 </style>
 {% endblock %}
 
@@ -145,6 +195,31 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 <!-- Customer modal -->
 <div id="customerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle">
   <h3 id="customerModalTitle">Find existing member</h3>
+
+  <!-- QR Scan button -->
+  <button type="button" class="btn-scan" id="startScanBtn">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/>
+    </svg>
+    Scan Member QR
+  </button>
+
+  <!-- Scanner container -->
+  <div class="scanner-wrap" id="scannerWrap">
+    <div id="qr-reader"></div>
+    <button type="button" class="btn-stop-scan" id="stopScanBtn">✕ Stop Camera</button>
+  </div>
+
+  <!-- Confirm step after scan -->
+  <div class="qr-confirm" id="qrConfirm">
+    <div class="qr-confirm-name" id="qrConfirmName"></div>
+    <div class="qr-confirm-phone" id="qrConfirmPhone"></div>
+    <div class="qr-confirm-actions">
+      <button type="button" class="btn-confirm-yes" id="qrConfirmYes">✓ Use this member</button>
+      <button type="button" class="btn-confirm-no" id="qrConfirmNo">✕ Scan again</button>
+    </div>
+  </div>
 
   <div style="display:flex; gap:8px; margin-bottom:10px;">
     <input id="customerSearch" type="text" placeholder="Search by name or phone..." style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd;">
@@ -571,8 +646,173 @@ window._updateOrderSubmitState = updateSubmitAvailability;
   document.querySelectorAll('.smoothie-qty').forEach(input => {
     input.addEventListener('wheel', (ev) => ev.target.blur());
   });
-  
 
+})();
+</script>
+
+<!-- QR Scanner logic (html5-qrcode) -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+(function () {
+  const startScanBtn  = document.getElementById('startScanBtn');
+  const stopScanBtn   = document.getElementById('stopScanBtn');
+  const scannerWrap   = document.getElementById('scannerWrap');
+  const qrConfirm     = document.getElementById('qrConfirm');
+  const qrConfirmName = document.getElementById('qrConfirmName');
+  const qrConfirmPhone= document.getElementById('qrConfirmPhone');
+  const qrConfirmYes  = document.getElementById('qrConfirmYes');
+  const qrConfirmNo   = document.getElementById('qrConfirmNo');
+  const checkPhoneUrl = "{% url 'customers_check_phone' %}";
+
+  let html5QrCode = null;
+  let pendingCustomer = null;  // { id, name, phone }
+
+  // ── Extract phone from scanned URL ──────────────────────────────────────
+  // Expected format: http(s)://domain/<phone>/
+  function extractPhone(rawText) {
+    try {
+      const url = new URL(rawText);
+      // pathname = "/<phone>/"  →  strip slashes
+      const parts = url.pathname.replace(/^\/|\/$/g, '').split('/');
+      const candidate = parts[parts.length - 1];
+      // must be digits-only and reasonable length
+      if (/^\d{6,15}$/.test(candidate)) return candidate;
+    } catch (_) {
+      // not a URL — try treating raw text as phone directly
+      const clean = rawText.replace(/\D/g, '');
+      if (/^\d{6,15}$/.test(clean)) return clean;
+    }
+    return null;
+  }
+
+  // ── Start camera ─────────────────────────────────────────────────────────
+  async function startScanner() {
+    scannerWrap.classList.add('open');
+    startScanBtn.style.display = 'none';
+    qrConfirm.classList.remove('open');
+
+    html5QrCode = new Html5Qrcode('qr-reader');
+    try {
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        onScanSuccess,
+        () => {}   // suppress verbose errors
+      );
+    } catch (err) {
+      scannerWrap.classList.remove('open');
+      startScanBtn.style.display = '';
+      alert('Could not access camera. Please allow camera permission and try again.');
+      console.error(err);
+    }
+  }
+
+  // ── Stop camera ──────────────────────────────────────────────────────────
+  async function stopScanner() {
+    if (html5QrCode) {
+      try { await html5QrCode.stop(); } catch (_) {}
+      html5QrCode.clear();
+      html5QrCode = null;
+    }
+    scannerWrap.classList.remove('open');
+    startScanBtn.style.display = '';
+  }
+
+  // ── On successful scan ───────────────────────────────────────────────────
+  async function onScanSuccess(decodedText) {
+    await stopScanner();
+
+    const phone = extractPhone(decodedText);
+    if (!phone) {
+      alert('QR code not recognized. Make sure you scan a Shooties member QR.');
+      return;
+    }
+
+    // Look up customer via AJAX
+    try {
+      const res = await fetch(`${checkPhoneUrl}?phone=${encodeURIComponent(phone)}`, {
+        credentials: 'same-origin'
+      });
+      const data = await res.json();
+      if (data.exists) {
+        pendingCustomer = { id: data.id, name: data.name, phone: data.phone };
+        showConfirm(data.name, data.phone);
+      } else {
+        alert(`No member found for phone ${phone}. Ask them to register at /register/`);
+      }
+    } catch (err) {
+      alert('Network error while looking up member. Please try again.');
+      console.error(err);
+    }
+  }
+
+  // ── Show confirmation step ───────────────────────────────────────────────
+  function showConfirm(name, phone) {
+    qrConfirmName.textContent  = name;
+    qrConfirmPhone.textContent = phone;
+    qrConfirm.classList.add('open');
+  }
+
+  // ── Confirm: use this member ─────────────────────────────────────────────
+  qrConfirmYes.addEventListener('click', () => {
+    if (!pendingCustomer) return;
+    // call the existing useCustomer function defined in the main script
+    useCustomer(pendingCustomer.id, pendingCustomer.name, pendingCustomer.phone);
+    qrConfirm.classList.remove('open');
+    // close the whole customer modal
+    document.getElementById('customerModal').style.display = 'none';
+    document.getElementById('modalBackdrop').style.display = 'none';
+    pendingCustomer = null;
+  });
+
+  // ── Confirm: scan again ──────────────────────────────────────────────────
+  qrConfirmNo.addEventListener('click', () => {
+    qrConfirm.classList.remove('open');
+    pendingCustomer = null;
+    startScanner();
+  });
+
+  // ── Button listeners ─────────────────────────────────────────────────────
+  startScanBtn.addEventListener('click', startScanner);
+  stopScanBtn.addEventListener('click', stopScanner);
+
+  // Stop camera if modal closes
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  [modalBackdrop, closeModalBtn].forEach(el => {
+    el?.addEventListener('click', () => {
+      stopScanner();
+      qrConfirm.classList.remove('open');
+    });
+  });
+  document.addEventListener('keydown', async (e) => {
+    if (e.key === 'Escape') { await stopScanner(); qrConfirm.classList.remove('open'); }
+  });
+
+  // Expose useCustomer to this scope (it's defined inside the IIFE above,
+  // so we grab it via the window bridge set there)
+  function useCustomer(id, name, phone) {
+    // replicate the same logic as the main useCustomer function
+    const selectedCustomerWrap   = document.getElementById('selectedCustomerWrap');
+    const selectedCustomerName   = document.getElementById('selectedCustomerName');
+    const selectedCustomerPhone  = document.getElementById('selectedCustomerPhone');
+    const selectedCustomerIdHidden = document.getElementById('selected_customer_id');
+    const phoneDisplay           = document.getElementById('phone_display');
+    const cancelCustomerBtn      = document.getElementById('cancelCustomerBtn');
+
+    selectedCustomerWrap.style.display = 'block';
+    selectedCustomerName.textContent   = name;
+    selectedCustomerPhone.textContent  = phone;
+    selectedCustomerIdHidden.value     = id || '';
+    phoneDisplay.value                 = phone || '';
+    document.getElementById('id_name').value           = name || '';
+    document.getElementById('id_name').readOnly        = true;
+    document.getElementById('id_name').style.backgroundColor = '#f6f6f6';
+    document.getElementById('new_phone').value         = phone || '';
+    cancelCustomerBtn.style.display = 'inline-block';
+
+    if (window._updateOrderSubmitState) window._updateOrderSubmitState();
+  }
 })();
 </script>
 {% endblock %}
