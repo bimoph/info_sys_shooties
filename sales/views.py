@@ -14,9 +14,10 @@ from django.utils.dateparse import parse_date
 
 
 
-from inventory.models import SmoothieMenu, SmoothieIngredient, StockEntry
+import json
+from inventory.models import SmoothieMenu, SmoothieIngredient, StockEntry, AddOn
 from .forms import OrderForm
-from .models import Order, OrderItem
+from .models import Order, OrderItem, OrderItemAddOn
 
 from customers.utils import find_customer_by_phone, normalize_phone  # import helper
 
@@ -220,31 +221,49 @@ def create_order(request):
             order.total_price = 0
             order.save()
 
-            # Build items + stock deductions
+            # Parse cart entries from JSON
+            try:
+                cart_entries = json.loads(request.POST.get('cart_json', '[]'))
+            except (json.JSONDecodeError, TypeError):
+                cart_entries = []
+
             total_price = 0
-            for smoothie in smoothies:
-                qty_raw = request.POST.get(f'smoothie_{smoothie.id}', 0)
+            for entry in cart_entries:
                 try:
-                    qty = int(qty_raw)
+                    smoothie_id = int(entry.get('smoothie_id', 0))
+                    qty = int(entry.get('qty', 0))
                 except (TypeError, ValueError):
-                    qty = 0
-                if qty > 0:
-                    OrderItem.objects.create(order=order, smoothie=smoothie, quantity=qty)
-                    total_price += qty * float(smoothie.price)
+                    continue
+                if qty <= 0:
+                    continue
+                try:
+                    smoothie = SmoothieMenu.objects.get(pk=smoothie_id, stores=request.user.store)
+                except SmoothieMenu.DoesNotExist:
+                    continue
 
-                    # Deduct ingredients
-                    smoothie_ingredients = SmoothieIngredient.objects.filter(smoothie=smoothie)
-                    for si in smoothie_ingredients:
-                        total_deduction = qty * si.amount
-                        ing = si.ingredient
-                        ing.quantity_in_stock = ing.quantity_in_stock - total_deduction
-                        ing.save()
+                order_item = OrderItem.objects.create(order=order, smoothie=smoothie, quantity=qty)
+                total_price += qty * float(smoothie.price)
 
-                        StockEntry.objects.create(
-                            ingredient=ing,
-                            quantity=-total_deduction,
-                            reason='sale_deduct'
-                        )
+                # Add-ons for this cart entry
+                addon_ids = entry.get('addon_ids', [])
+                for addon_id in addon_ids:
+                    try:
+                        addon = AddOn.objects.get(pk=int(addon_id), menu=smoothie, is_active=True)
+                        OrderItemAddOn.objects.create(order_item=order_item, addon=addon)
+                        total_price += qty * float(addon.price)
+                    except (AddOn.DoesNotExist, TypeError, ValueError):
+                        pass
+
+                # Deduct ingredients
+                for si in SmoothieIngredient.objects.filter(smoothie=smoothie):
+                    total_deduction = qty * si.amount
+                    si.ingredient.quantity_in_stock -= total_deduction
+                    si.ingredient.save()
+                    StockEntry.objects.create(
+                        ingredient=si.ingredient,
+                        quantity=-total_deduction,
+                        reason='sale_deduct'
+                    )
 
             order.total_price = total_price
             order.save()

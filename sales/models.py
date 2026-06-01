@@ -56,3 +56,11 @@ class OrderItem(models.Model):
     smoothie = models.ForeignKey(SmoothieMenu, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
 
+
+class OrderItemAddOn(models.Model):
+    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, related_name='addons')
+    addon = models.ForeignKey('inventory.AddOn', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.addon.name} for {self.order_item}"
+

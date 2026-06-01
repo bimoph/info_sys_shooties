@@ -38,6 +38,19 @@ class SmoothieMenu(models.Model):
     def __str__(self):
         return self.name
 
+    def get_active_addons(self):
+        return self.addons.filter(is_active=True)
+
+class AddOn(models.Model):
+    menu = models.ForeignKey(SmoothieMenu, on_delete=models.CASCADE, related_name='addons')
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.name} (+Rp {int(self.price):,})"
+
+
 class SmoothieIngredient(models.Model):
     # store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='smoothie_ingredients', blank=True, null=True)
 
