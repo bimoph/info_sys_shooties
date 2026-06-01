@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from core.views import home, no_permission
+from customers import views as views_customers
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -33,6 +34,9 @@ urlpatterns = [
     path('employee/', include('employee.urls')),
     path('sales/', include('sales.urls')),
     path('analytics/', include('analytics.urls')),
+    path('register/', views_customers.register_customer, name='customer_register'),
+    path('<str:phone>/passport/claim/', views_customers.passport_claim, name='passport_claim'),
+    path('<str:phone>/', views_customers.member_profile, name='member_profile'),
     
 
 ]

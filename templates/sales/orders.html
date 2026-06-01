@@ -2,222 +2,141 @@
 {% load currency_filters %}
 {% block title %}All Orders{% endblock %}
 
-{% block content %}
-<div class="header-row">
-    <h1>All Orders</h1>
-    <div class="action-buttons">
-        <a href="{% url 'create_order' %}">➕ Create New Order</a>
-        {% if role == 'admin' or role == 'manager' %}
-        <a href="{% url 'order_list' %}" style="display:inline-block; padding:6px 12px; border:1px solid #6c757d; border-radius:4px; color:#6c757d; text-decoration:none; font-size:14px; cursor:pointer; background-color: transparent;">
-        Order List
-        </a>
-        {% endif %}
-
-    </div>
-</div>
-
-<h3 style="display:flex; align-items:center; gap:12px;">
-    Pending Orders ||
-    {% if pending_items_summary %}
-    <div class="pending-summary" style="display:flex; flex-wrap:wrap; gap:12px; font-weight:600;">
-        {% for item in pending_items_summary %}
-        <span>• {{ item.smoothie__name }}:  {{ item.pending_qty }} cup{% if item.pending_qty > 1 %}s{% endif %}</span>
-        {% endfor %}
-    </div>
-    {% endif %}
-</h3>
-<div class="table-container">
-    <table>
-        {% include "sales/partials/order_table.html" with orders=pending_orders table_type="pending" %}
-    </table>
-</div>
-
-<h3>Ready Orders</h3>
-<div class="table-container">
-    <table>
-        {% include "sales/partials/order_table.html" with orders=ready_orders table_type="ready" %}
-    </table>
-</div>
-
-<h3>Served Orders</h3>
-<div class="table-container">
-    <table>
-        {% include "sales/partials/order_table.html" with orders=served_orders table_type="served" %}
-    </table>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    const csrfToken = '{{ csrf_token }}';
-
-    async function postAction(url) {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json',
-            },
-        });
-        if (response.ok) {
-            location.reload();
-        } else {
-            alert('Failed to update order');
-        }
-    }
-
-    document.querySelectorAll('.btn-ready').forEach(btn =>
-        btn.addEventListener('click', () => {
-            postAction(`/sales/mark-ready/${btn.dataset.id}/`);
-        })
-    );
-
-    document.querySelectorAll('.btn-served').forEach(btn =>
-        btn.addEventListener('click', () => {
-            postAction(`/sales/mark-served/${btn.dataset.id}/`);
-        })
-    );
-
-    document.querySelectorAll('.btn-delete').forEach(btn =>
-        btn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to delete this order?')) {
-                postAction(`/sales/delete-order/${btn.dataset.id}/`);
-            }
-        })
-    );
-
-    document.querySelectorAll('.btn-move-to-pending').forEach(btn =>
-        btn.addEventListener('click', () => {
-            postAction(`/sales/move-to-pending/${btn.dataset.id}/`);
-        })
-    );
-
-    document.querySelectorAll('.btn-move-to-ready').forEach(btn =>
-        btn.addEventListener('click', () => {
-            postAction(`/sales/move-to-ready/${btn.dataset.id}/`);
-        })
-    );
-
-    function attachCheckboxEvents() {
-        document.querySelectorAll('.ready-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', async function () {
-                const orderId = this.closest('tr').dataset.orderId;
-                const response = await fetch(`/sales/toggle-ready/${orderId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json'
-                    },
-                    body: '{}'
-                });
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert("Failed to update ready status.");
-                    this.checked = !this.checked;
-                }
-            });
-        });
-
-        document.querySelectorAll('.served-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', async function () {
-                const orderId = this.closest('tr').dataset.orderId;
-                const response = await fetch(`/sales/toggle-served/${orderId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json'
-                    },
-                    body: '{}'
-                });
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert("Failed to update served status.");
-                    this.checked = !this.checked;
-                }
-            });
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', attachCheckboxEvents);
-
-    // Dropdown menu handling
-    document.querySelectorAll('.menu-button').forEach(button => {
-        button.addEventListener('click', e => {
-            e.stopPropagation();
-            const dropdown = button.nextElementSibling;
-
-            if (dropdown.style.display === 'block') {
-                dropdown.style.display = 'none';
-                return;
-            }
-
-            document.querySelectorAll('.dropdown-content').forEach(menu => menu.style.display = 'none');
-
-            if (!document.body.contains(dropdown)) {
-                document.body.appendChild(dropdown);
-            }
-
-            const rect = button.getBoundingClientRect();
-            dropdown.style.top = (rect.bottom + window.scrollY) + "px";
-            dropdown.style.left = (rect.left + window.scrollX) + "px";
-
-            dropdown.style.display = 'block';
-        });
-    });
-
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.dropdown-content').forEach(menu => menu.style.display = 'none');
-    });
-</script>
-{% endblock %}
-
 {% block extra_css %}
 <style>
-    h1, h3 {
-        color: #333;
+    /* ── Design tokens ───────────────────────── */
+    :root {
+        --orange:        #F97316;
+        --orange-dark:   #EA6C0A;
+        --orange-light:  #FFF7ED;
+        --orange-border: #FDBA74;
+        --text-primary:  #1C1C1E;
+        --text-secondary:#6B7280;
+        --bg:            #F9FAFB;
+        --card:          #FFFFFF;
+        --border:        #E5E7EB;
+        --radius:        12px;
+        --radius-sm:     8px;
     }
 
-    /* Align h1 left & button right */
-    .header-row {
+    /* ── Page layout ─────────────────────────── */
+    body { background: var(--bg); }
+
+    .page-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
     }
 
-    .action-buttons a {
-        display: inline-block;
-        padding: 10px 16px;
-        background-color: #28a745;
-        color: white;
+    .page-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 18px;
+        background: var(--orange);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 600;
         text-decoration: none;
-        border-radius: 6px;
-        transition: background-color 0.2s ease;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--orange-dark); }
+
+    .btn-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 18px;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-outline:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* ── Section ─────────────────────────────── */
+    .section { margin-bottom: 32px; }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
     }
 
-    .action-buttons a:hover {
-        background-color: #218838;
+    .section-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
-    .served {
-        text-decoration: line-through;
-        opacity: 0.5;
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 10px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .badge-pending  { background: #FEF3C7; color: #92400E; }
+    .badge-ready    { background: #D1FAE5; color: #065F46; }
+    .badge-served   { background: #DBEAFE; color: #1E40AF; }
+
+    .pending-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-left: auto;
+    }
+    .pending-summary span {
+        font-size: 12px;
+        font-weight: 600;
+        color: #92400E;
+        background: #FEF3C7;
+        padding: 2px 10px;
+        border-radius: 99px;
     }
 
-    .checkbox-cell {
-        text-align: center;
+    /* ── Card / table wrapper ────────────────── */
+    .order-card {
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
     }
 
-    /* Scrollable table for >4 rows */
-    .table-container {
-        max-height: calc(4 * 48px);
+    /* Scrollable when >4 rows */
+    .order-scroll {
+        max-height: calc(4 * 72px + 48px);
         overflow-y: auto;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: #fff;
-        margin-bottom: 20px;
     }
 
     table {
@@ -225,19 +144,313 @@
         width: 100%;
     }
 
-    th, td {
-        border-bottom: 1px solid #ddd;
-        padding: 12px 16px;
-        text-align: left;
-        vertical-align: top;
-    }
-
-    th {
-        background-color: #fafafa;
-        font-weight: bold;
+    thead th {
+        background: var(--orange-light);
+        color: var(--text-secondary);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 10px 16px;
         position: sticky;
         top: 0;
         z-index: 1;
+        border-bottom: 1.5px solid var(--orange-border);
+    }
+
+    tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #FFFBF5; }
+
+    td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        font-size: 14px;
+        color: var(--text-primary);
+    }
+
+    .td-time {
+        white-space: nowrap;
+        color: var(--text-secondary);
+        font-size: 13px;
+        min-width: 80px;
+    }
+
+    .td-name { font-weight: 600; }
+
+    .td-total {
+        font-weight: 700;
+        color: var(--orange-dark);
+        white-space: nowrap;
+    }
+
+    .menu-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+    .menu-list li { line-height: 1.6; }
+
+    /* ── Action buttons ──────────────────────── */
+    .action-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 44px;
+        padding: 0 16px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: opacity 0.15s, transform 0.1s;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .btn-action:active { opacity: 0.8; transform: scale(0.97); }
+
+    .btn-mark-ready  { background: #D1FAE5; color: #065F46; }
+    .btn-mark-ready:hover  { background: #A7F3D0; }
+
+    .btn-mark-served { background: var(--orange); color: #fff; }
+    .btn-mark-served:hover { background: var(--orange-dark); }
+
+    /* ── Overflow / more menu ────────────────── */
+    .dropdown { position: relative; }
+
+    .btn-more {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        min-width: 44px;
+        background: var(--bg);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 20px;
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: border-color 0.15s;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .btn-more:hover { border-color: var(--orange); color: var(--orange); }
+
+    .dropdown-menu {
+        display: none;
+        position: fixed;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        min-width: 180px;
+        z-index: 9999;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+        overflow: hidden;
+    }
+
+    .dropdown-menu button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px 16px;
+        background: none;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        text-align: left;
+        cursor: pointer;
+        color: var(--text-primary);
+        transition: background 0.1s;
+    }
+    .dropdown-menu button:hover { background: var(--bg); }
+    .dropdown-menu button.btn-danger { color: #DC2626; }
+    .dropdown-menu button.btn-danger:hover { background: #FEE2E2; }
+
+    /* ── Empty state ─────────────────────────── */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 36px 16px;
+        color: var(--text-secondary);
+        gap: 8px;
+    }
+    .empty-state .empty-icon { font-size: 32px; opacity: 0.4; }
+    .empty-state p { margin: 0; font-size: 14px; font-weight: 500; }
+
+    /* ── Mobile tweaks ───────────────────────── */
+    @media (max-width: 600px) {
+        .page-title { font-size: 18px; }
+        td, thead th { padding: 10px 12px; }
+        .btn-action { min-height: 48px; font-size: 12px; padding: 0 12px; }
+        .btn-more   { min-height: 48px; min-width: 48px; }
     }
 </style>
+{% endblock %}
+
+{% block content %}
+<!-- ── Header ─────────────────────────────── -->
+<div class="page-header">
+    <h1 class="page-title">Orders</h1>
+    <div class="header-actions">
+        <a href="{% url 'create_order' %}" class="btn-primary">➕ New Order</a>
+        {% if role == 'admin' or role == 'manager' %}
+        <a href="{% url 'order_list' %}" class="btn-outline">Order List</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Pending ────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <h2 class="section-title">Pending</h2>
+        <span class="status-badge badge-pending">{{ pending_orders|length }}</span>
+        {% if pending_items_summary %}
+        <div class="pending-summary">
+            {% for item in pending_items_summary %}
+            <span>{{ item.smoothie__name }}: {{ item.pending_qty }} cup{% if item.pending_qty > 1 %}s{% endif %}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="order-card">
+        <div class="order-scroll">
+            <table>
+                {% include "sales/partials/order_table.html" with orders=pending_orders table_type="pending" %}
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ── Ready ──────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <h2 class="section-title">Ready</h2>
+        <span class="status-badge badge-ready">{{ ready_orders|length }}</span>
+    </div>
+    <div class="order-card">
+        <div class="order-scroll">
+            <table>
+                {% include "sales/partials/order_table.html" with orders=ready_orders table_type="ready" %}
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ── Served ─────────────────────────────── -->
+<div class="section">
+    <div class="section-header">
+        <h2 class="section-title">Served</h2>
+        <span class="status-badge badge-served">{{ served_orders|length }}</span>
+    </div>
+    <div class="order-card">
+        <div class="order-scroll">
+            <table>
+                {% include "sales/partials/order_table.html" with orders=served_orders table_type="served" %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrf = '{{ csrf_token }}';
+
+async function postAction(url) {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/json' },
+    });
+    if (res.ok) location.reload();
+    else alert('Failed to update order.');
+}
+
+document.querySelectorAll('.btn-ready').forEach(b =>
+    b.addEventListener('click', () => postAction(`/sales/mark-ready/${b.dataset.id}/`))
+);
+document.querySelectorAll('.btn-served').forEach(b =>
+    b.addEventListener('click', () => postAction(`/sales/mark-served/${b.dataset.id}/`))
+);
+document.querySelectorAll('.btn-delete').forEach(b =>
+    b.addEventListener('click', () => {
+        if (confirm('Delete this order?')) postAction(`/sales/delete-order/${b.dataset.id}/`);
+    })
+);
+document.querySelectorAll('.btn-move-to-pending').forEach(b =>
+    b.addEventListener('click', () => postAction(`/sales/move-to-pending/${b.dataset.id}/`))
+);
+document.querySelectorAll('.btn-move-to-ready').forEach(b =>
+    b.addEventListener('click', () => postAction(`/sales/move-to-ready/${b.dataset.id}/`))
+);
+
+/* ── Dropdown ── */
+function closeAllMenus() {
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+}
+
+document.querySelectorAll('.btn-more').forEach(btn => {
+    /* Store a stable reference to the sibling menu at bind time,
+       before any DOM movement can break nextElementSibling. */
+    const menu = btn.nextElementSibling;
+
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = menu.style.display === 'block';
+        closeAllMenus();
+        if (isOpen) return;
+
+        /* Temporarily show off-screen to measure natural height */
+        menu.style.visibility = 'hidden';
+        menu.style.display = 'block';
+        const menuH = menu.offsetHeight;
+        const menuW = menu.offsetWidth;
+        menu.style.visibility = '';
+
+        const r   = btn.getBoundingClientRect();
+        const vw  = window.innerWidth;
+        const vh  = window.innerHeight;
+
+        /* Flip up if not enough room below */
+        const top = (r.bottom + 4 + menuH > vh)
+            ? r.top - menuH - 4
+            : r.bottom + 4;
+
+        /* Align right edge to button if overflow on right */
+        const left = (r.left + menuW > vw)
+            ? r.right - menuW
+            : r.left;
+
+        menu.style.top  = top  + 'px';
+        menu.style.left = left + 'px';
+        menu.style.display = 'block';
+    });
+});
+document.addEventListener('click', () =>
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none')
+);
+
+document.querySelectorAll('.order-scroll').forEach(el =>
+    el.addEventListener('scroll', () =>
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none')
+    )
+);
+window.addEventListener('scroll', () =>
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none')
+);
+</script>
 {% endblock %}

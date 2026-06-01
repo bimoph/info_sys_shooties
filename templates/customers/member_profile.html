@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+{% load humanize %}
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ customer.name }} — Shooties Member</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #fafaf8;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+      color: #1a1a1a;
+    }
+
+    /* Brand bar */
+    .topbar {
+      text-align: center;
+      padding: 12px 0 28px;
+    }
+    .brand-logo {
+      width: 96px;
+      height: 96px;
+      border-radius: 20px;
+      display: inline-block;
+      object-fit: cover;
+      box-shadow: 0 4px 14px rgba(255,140,0,0.22);
+    }
+
+    /* Welcome toast */
+    .welcome-toast {
+      max-width: 520px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #ff8c00, #ff6000);
+      color: #fff;
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(255,140,0,0.28);
+      animation: slideDown 0.4s ease;
+    }
+    .welcome-toast .toast-icon { font-size: 28px; flex-shrink: 0; }
+    .welcome-toast .toast-text strong { font-size: 16px; display: block; }
+    .welcome-toast .toast-text span { font-size: 13px; opacity: 0.88; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Layout */
+    .container { max-width: 680px; margin: 0 auto; }
+
+    /* Member card */
+    .member-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .member-card-header {
+      background: linear-gradient(135deg, #ff8c00, #ff6000);
+      padding: 28px 28px 24px;
+      color: #fff;
+      position: relative;
+    }
+    .member-card-header .member-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 6px;
+    }
+    .member-card-header .member-name {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .member-card-header .member-phone {
+      font-size: 15px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+    .member-card-header .join-badge {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .member-card-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-top: 1px solid #f0f0f0;
+    }
+    .stat-cell {
+      padding: 20px 20px;
+      text-align: center;
+      border-right: 1px solid #f0f0f0;
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ff8c00;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      font-weight: 500;
+    }
+
+    /* Section */
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 10px;
+      padding-left: 2px;
+    }
+
+    /* Order cards */
+    .order-list { display: flex; flex-direction: column; gap: 10px; }
+    .order-card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .order-left {}
+    .order-id {
+      font-size: 12px;
+      color: #bbb;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .order-items-text {
+      font-size: 14px;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    .order-date {
+      font-size: 12px;
+      color: #aaa;
+    }
+    .order-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .order-price {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1a1a1a;
+    }
+    .order-status {
+      font-size: 12px;
+      margin-top: 4px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 600;
+    }
+    .status-served { background: #e8f8ee; color: #1a7a3a; }
+    .status-ready  { background: #fffbe6; color: #a07000; }
+    .status-pending{ background: #f4f4f4; color: #888; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      background: #fff;
+      border-radius: 14px;
+      color: #bbb;
+      font-size: 14px;
+    }
+    .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+
+    /* QR button */
+    .btn-qr {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      background: #fff;
+      border: 1.5px solid #ff8c00;
+      color: #ff8c00;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      margin-top: 16px;
+      width: 100%;
+      justify-content: center;
+    }
+    .btn-qr:hover { background: #ff8c00; color: #fff; }
+
+    /* QR Modal */
+    .qr-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-overlay.open { display: flex; }
+    .qr-modal {
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px 28px 28px;
+      text-align: center;
+      max-width: 320px;
+      width: 92%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      animation: popIn 0.22s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .qr-modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+    .qr-modal-sub {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+    #qrcode-canvas, #claim-qrcode-canvas {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    #qrcode-canvas canvas, #qrcode-canvas img,
+    #claim-qrcode-canvas canvas, #claim-qrcode-canvas img {
+      border-radius: 12px;
+      border: 6px solid #fff;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+    .qr-modal-phone {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+    .btn-close-qr {
+      display: block;
+      width: 100%;
+      padding: 11px;
+      background: #f5f5f3;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #555;
+      cursor: pointer;
+    }
+    .btn-close-qr:hover { background: #ebebeb; }
+
+    /* ── Shooties Passport ───────────────────────────────────────── */
+    .passport-card {
+      position: relative;
+      background: #e8843a;
+      border-radius: 20px;
+      padding: 22px 22px 18px;
+      color: #fff;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(232,132,58,0.35);
+    }
+    /* faint fruit watermarks */
+    .passport-card::before,
+    .passport-card::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.13);
+      pointer-events: none;
+    }
+    .passport-card::before { width: 150px; height: 150px; top: -40px; left: -50px; }
+    .passport-card::after  { width: 180px; height: 180px; bottom: -70px; right: -50px; }
+
+    .passport-title {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-align: center;
+      line-height: 1;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.12);
+    }
+    .passport-title .p1 { color: #8c2b34; }
+    .passport-title .p2 { color: #2f6b1f; }
+    .passport-title .p3 { color: #acd34a; }
+    .passport-sub {
+      background: #fff;
+      color: #8c2b34;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      border-radius: 999px;
+      padding: 6px 14px;
+      margin: 12px auto 18px;
+      max-width: 320px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .passport-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .cup {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* soft spotlight glow behind each cup */
+    .cup::before {
+      content: "";
+      position: absolute;
+      width: 82%;
+      height: 82%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1), rgba(255,255,255,0) 70%);
+      z-index: 0;
+    }
+    .cup-img {
+      position: relative;
+      z-index: 1;
+      width: 102%;
+      height: 102%;
+      object-fit: contain;
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
+    /* stamped cup */
+    .cup-stamped .cup-img { opacity: 1; }
+    /* free reward cup always shown in full */
+    .cup-free .cup-img { opacity: 1; }
+    /* Shooties ink stamp mark (shown only when stamped) */
+    .cup-stamp-mark {
+      position: absolute;
+      z-index: 2;
+      width: 60%;
+      height: 60%;
+      object-fit: contain;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .cup-stamped .cup-stamp-mark {
+      opacity: 0.92;
+      mix-blend-mode: multiply;
+      animation: stampDown 0.35s cubic-bezier(.2,1.5,.4,1);
+    }
+    @keyframes stampDown {
+      0%   { opacity: 0;    transform: rotate(var(--rot, -10deg)) scale(1.9); }
+      60%  { opacity: 0.95; transform: rotate(var(--rot, -10deg)) scale(0.9); }
+      100% { opacity: 0.92; transform: rotate(var(--rot, -10deg)) scale(1); }
+    }
+    /* slightly different angle per slot so it looks hand-stamped */
+    .cup:nth-child(1) .cup-stamp-mark { --rot: -12deg; transform: rotate(-12deg); }
+    .cup:nth-child(2) .cup-stamp-mark { --rot:   8deg; transform: rotate(8deg); }
+    .cup:nth-child(3) .cup-stamp-mark { --rot:  -5deg; transform: rotate(-5deg); }
+    .cup:nth-child(4) .cup-stamp-mark { --rot:  11deg; transform: rotate(11deg); }
+    .cup:nth-child(5) .cup-stamp-mark { --rot:  -8deg; transform: rotate(-8deg); }
+    .free-label {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%) rotate(-6deg);
+      z-index: 2;
+      font-size: 12px;
+      font-weight: 900;
+      color: #8c2b34;
+      background: #fff;
+      padding: 2px 12px;
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+    }
+    .cup-ready { animation: pulseCup 1.4s ease-in-out infinite; }
+    @keyframes pulseCup {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.08); }
+    }
+    .passport-progress {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0.92;
+    }
+    .btn-claim {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      background: #fff;
+      color: #8c2b34;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+      transition: transform 0.12s;
+    }
+    .btn-claim:hover { transform: translateY(-1px); }
+    .passport-footer {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #aa2f3a;
+    }
+
+    /* Passport history */
+    .passport-history { display: flex; flex-direction: column; gap: 10px; }
+    .passport-hist-item {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .passport-hist-item .hist-icon { font-size: 22px; }
+    .passport-hist-item .hist-body { flex: 1; }
+    .passport-hist-item .hist-body strong { font-size: 14px; color: #333; }
+    .passport-hist-item .hist-date { font-size: 12px; color: #aaa; margin-top: 2px; }
+    .passport-hist-item .hist-check {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #e8f8ee; color: #1a7a3a;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 14px;
+    }
+
+    /* ── Shareable stats card (9:16 IG story poster) ────────────────── */
+    .share-wrap { display: flex; justify-content: center; }
+    .share-card {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      aspect-ratio: 9 / 16;
+      background: linear-gradient(160deg, #ff9c33 0%, #ff6000 100%);
+      border-radius: 24px;
+      padding: 30px 26px;
+      color: #fff;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(255,96,0,0.32);
+      display: flex;
+      flex-direction: column;
+    }
+    .share-card::before {
+      content: "";
+      position: absolute;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.09);
+      top: -110px; left: -90px;
+    }
+    .share-card::after {
+      content: "";
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      bottom: -130px; right: -90px;
+    }
+    .share-head {
+      display: flex; align-items: center; gap: 10px;
+      position: relative; z-index: 1;
+    }
+    .share-head img { width: 44px; height: 44px; border-radius: 12px; }
+    .share-head .sh-title { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.92; }
+    .share-name {
+      font-size: 30px; font-weight: 900; letter-spacing: -0.5px;
+      margin-top: 26px; position: relative; z-index: 1; line-height: 1.05;
+    }
+    .share-name span { font-size: 14px; font-weight: 600; opacity: 0.85; display: block; margin-top: 6px; }
+    .share-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+      margin-top: auto; margin-bottom: auto;
+      position: relative; z-index: 1;
+    }
+    .share-stat {
+      background: rgba(255,255,255,0.17);
+      border-radius: 16px; padding: 20px 14px; text-align: center;
+    }
+    .share-stat .s-emoji { font-size: 26px; }
+    .share-stat .s-value { font-size: 28px; font-weight: 900; line-height: 1.1; margin-top: 6px; }
+    .share-stat .s-value small { font-size: 15px; font-weight: 700; }
+    .share-stat .s-label { font-size: 11px; font-weight: 600; opacity: 0.88; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .share-fav .s-value { font-size: 18px; }
+    .share-foot {
+      text-align: center; font-size: 14px; font-weight: 800;
+      letter-spacing: 0.5px; opacity: 0.95; position: relative; z-index: 1;
+    }
+    .btn-share {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; margin-top: 12px; padding: 12px;
+      background: #fff; color: #ff6000; border: none; border-radius: 12px;
+      font-size: 14px; font-weight: 800; cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .btn-share:hover { background: #fff4ea; }
+
+    /* Pagination */
+    .pager {
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+      margin-top: 12px;
+    }
+    .pager button {
+      background: #fff; border: 1.5px solid #ff8c00; color: #ff8c00;
+      border-radius: 9px; padding: 6px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .pager button:disabled { opacity: 0.4; cursor: default; }
+    .pager .pager-info { font-size: 13px; color: #999; font-weight: 600; }
+
+    /* Register link */
+    .register-link {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 13px;
+      color: #bbb;
+    }
+    .register-link a { color: #ff8c00; text-decoration: none; font-weight: 600; }
+
+    @media (max-width: 480px) {
+      .member-card-body { grid-template-columns: 1fr 1fr 1fr; }
+      .stat-cell { padding: 16px 10px; }
+      .stat-value { font-size: 18px; }
+      .member-card-header { padding: 20px; }
+      .member-card-header .join-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <img class="brand-logo" src="{% static 'branding/shooties_logo.png' %}" alt="Shooties">
+  </div>
+
+  <div class="container">
+
+    {% if welcome %}
+    <div class="welcome-toast">
+      <div class="toast-icon">🎉</div>
+      <div class="toast-text">
+        <strong>Welcome to Shooties, {{ customer.name }}!</strong>
+        <span>Your membership is ready. See you at the counter!</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Member Card -->
+    <div class="member-card">
+      <div class="member-card-header">
+        <div class="member-label">Shooties Member</div>
+        <div class="member-name">{{ customer.name }}</div>
+        <div class="member-phone">{{ customer.phone }}</div>
+        <div class="join-badge">Since {{ customer.joined_at|date:"M Y" }}</div>
+      </div>
+      <div class="member-card-body">
+        <div class="stat-cell">
+          <div class="stat-value">{{ total_orders }}</div>
+          <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value">{{ total_cups }}</div>
+          <div class="stat-label">Cups Enjoyed</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value">Rp {{ total_spent_formatted }}</div>
+          <div class="stat-label">Total Spent</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Show QR Button -->
+    <button class="btn-qr" id="showQrBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/>
+        <rect x="19" y="14" width="2" height="2"/><rect x="14" y="19" width="2" height="2"/>
+        <rect x="19" y="19" width="2" height="2"/>
+      </svg>
+      Show My QR Code
+    </button>
+
+    <!-- Shooties Passport -->
+    <div class="section-title" style="margin-top: 24px;">Shooties Passport</div>
+    <div class="passport-card">
+      <div class="passport-title">
+        <span class="p1">SHOOTIES</span> <span class="p2">PASS</span><span class="p3">PORT!</span>
+      </div>
+      <div class="passport-sub">Get a free SHOOTIES! after your 5th cup! ♡</div>
+
+      <div class="passport-grid">
+        {% for slot, stamped in active_passport.stamp_range %}
+          <div class="cup {% if stamped %}cup-stamped{% endif %}">
+            <img class="cup-img" src="{% static 'branding/shooties_cup.svg' %}" alt="cup">
+            <img class="cup-stamp-mark" src="{% static 'branding/shooties_stamp.png' %}" alt="">
+          </div>
+        {% endfor %}
+        <div class="cup cup-free {% if active_passport.can_claim %}cup-ready{% endif %}">
+          <img class="cup-img" src="{% static 'branding/shooties_cup.svg' %}" alt="free cup">
+          <span class="free-label">FREE!</span>
+        </div>
+      </div>
+
+      {% if active_passport.can_claim %}
+        <button class="btn-claim" id="claimBtn">🎉 Claim Your Free Cup</button>
+      {% else %}
+        <div class="passport-progress">{{ active_passport.stamps }} / {{ passport_goal }} cups stamped</div>
+      {% endif %}
+
+      <div class="passport-footer">FOLLOW US! @shooties_smoothies</div>
+    </div>
+
+    <!-- Shareable stats -->
+    <div class="section-title" style="margin-top: 24px;">Shooties Stats</div>
+    <div class="share-wrap">
+    <div class="share-card" id="shareCard">
+      <div class="share-head">
+        <img src="{% static 'branding/shooties_logo.png' %}" alt="Shooties" crossorigin="anonymous">
+        <div class="sh-title">Shooties Wrapped</div>
+      </div>
+      <div class="share-name">
+        {{ customer.name }}
+        <span>Member since {{ customer.joined_at|date:"M Y" }}</span>
+      </div>
+      <div class="share-grid">
+        <div class="share-stat">
+          <div class="s-emoji">📅</div>
+          <div class="s-value">{{ weekly_cups }}</div>
+          <div class="s-label">Cups this week</div>
+        </div>
+        <div class="share-stat share-fav">
+          <div class="s-emoji">🏆</div>
+          <div class="s-value">{% if favorite_drink %}{{ favorite_drink }}{% else %}—{% endif %}</div>
+          <div class="s-label">{% if favorite_drink %}Fav · {{ favorite_drink_count }} cups{% else %}No fave yet{% endif %}</div>
+        </div>
+        <div class="share-stat">
+          <div class="s-emoji">🎟️</div>
+          <div class="s-value">{{ passports_redeemed }}</div>
+          <div class="s-label">Passports redeemed</div>
+        </div>
+        <div class="share-stat">
+          <div class="s-emoji">🥤</div>
+          <div class="s-value">{{ total_cups }}</div>
+          <div class="s-label">Cups all time</div>
+        </div>
+      </div>
+      <div class="share-foot">🥤 @shooties_smoothies</div>
+    </div>
+    </div>
+    <button class="btn-share" id="shareBtn">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14a2 2 0 0 0 2-2v-4"/>
+      </svg>
+      Save my Shooties card
+    </button>
+
+    {% if passport_history %}
+    <div class="section-title" style="margin-top: 24px;">Passport History</div>
+    <div class="passport-history" id="passportHistory">
+      {% for p in passport_history %}
+      <div class="passport-hist-item">
+        <span class="hist-icon">🎟️</span>
+        <div class="hist-body">
+          <strong>Free cup claimed</strong>
+          <div class="hist-date">Claimed on {{ p.claimed_at|date:"d M Y, H:i" }}</div>
+        </div>
+        <span class="hist-check">✓</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="pager" id="passportPager" style="display:none;">
+      <button type="button" data-dir="prev">‹ Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" data-dir="next">Next ›</button>
+    </div>
+    {% endif %}
+
+    <!-- Order History -->
+    <div class="section-title" style="margin-top: 24px;">Order History</div>
+
+    {% if orders %}
+    <div class="order-list" id="orderList">
+      {% for order in orders %}
+      <div class="order-card">
+        <div class="order-left">
+          <div class="order-id">#{{ order.id }} · {{ order.name }}</div>
+          <div class="order-items-text">
+            {% for item in order.orderitem_set.all %}
+              {{ item.smoothie.name }}{% if item.quantity > 1 %} ×{{ item.quantity }}{% endif %}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </div>
+          <div class="order-date">{{ order.created_at|date:"d M Y, H:i" }}</div>
+        </div>
+        <div class="order-right">
+          <div class="order-price">Rp {{ order.total_price|floatformat:"0" }}</div>
+          <div>
+            {% if order.is_served %}
+              <span class="order-status status-served">✓ Served</span>
+            {% elif order.is_ready %}
+              <span class="order-status status-ready">Ready</span>
+            {% else %}
+              <span class="order-status status-pending">Pending</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="pager" id="orderPager" style="display:none;">
+      <button type="button" data-dir="prev">‹ Prev</button>
+      <span class="pager-info"></span>
+      <button type="button" data-dir="next">Next ›</button>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">🥤</div>
+      <div>No orders yet — your first blend awaits!</div>
+    </div>
+    {% endif %}
+
+    <div class="register-link">
+      Not you? <a href="{% url 'customer_register' %}">Register a new member</a>
+    </div>
+
+  </div>
+
+<!-- Passport Claim QR Modal -->
+<div class="qr-overlay" id="claimOverlay">
+  <div class="qr-modal">
+    <div class="qr-modal-title">Free Cup Ready! 🎉</div>
+    <div class="qr-modal-sub">Show this to our cashier to redeem</div>
+    <div id="claim-qrcode-canvas"></div>
+    <div class="qr-modal-phone" id="claimUuidText" style="font-size:11px; letter-spacing:0; color:#bbb;"></div>
+    <button class="btn-close-qr" id="closeClaimBtn">Close</button>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qrOverlay">
+  <div class="qr-modal">
+    <div class="qr-modal-title" id="qrModalTitle">{{ customer.name }}</div>
+    <div class="qr-modal-sub" id="qrModalSub">Show this to our blenderista</div>
+    <div id="qrcode-canvas"></div>
+    <div class="qr-modal-phone" id="qrModalPhone">{{ customer.phone }}</div>
+    <div id="qrUnclaimedMsg" style="display:none; padding:18px 6px 22px; font-size:16px; font-weight:700; color:#8c2b34; line-height:1.5;">
+      🎉 You have an unclaimed free cup!<br>Scroll down to claim it.
+    </div>
+    <button class="btn-close-qr" id="closeQrBtn">Close</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  (function () {
+    const memberUrl = "{{ member_url|escapejs }}";
+    let qrGenerated = false;
+
+    const overlay  = document.getElementById('qrOverlay');
+    const showBtn  = document.getElementById('showQrBtn');
+    const closeBtn = document.getElementById('closeQrBtn');
+    const hasUnclaimed = {{ active_passport.can_claim|yesno:"true,false" }};
+
+    function openQr() {
+      overlay.classList.add('open');
+
+      // If a free cup is waiting to be claimed, prompt to claim instead of showing the QR.
+      if (hasUnclaimed) {
+        document.getElementById('qrModalTitle').textContent = 'Free Cup Available! 🎉';
+        document.getElementById('qrModalSub').style.display = 'none';
+        document.getElementById('qrcode-canvas').style.display = 'none';
+        document.getElementById('qrModalPhone').style.display = 'none';
+        document.getElementById('qrUnclaimedMsg').style.display = 'block';
+        return;
+      }
+
+      if (!qrGenerated) {
+        new QRCode(document.getElementById('qrcode-canvas'), {
+          text: memberUrl,
+          width: 220,
+          height: 220,
+          colorDark: '#1a1a1a',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H,
+        });
+        qrGenerated = true;
+      }
+    }
+
+    function closeQr() { overlay.classList.remove('open'); }
+
+    showBtn.addEventListener('click', openQr);
+    closeBtn.addEventListener('click', closeQr);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeQr(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeQr(); });
+  })();
+</script>
+
+<!-- Passport claim logic -->
+<script>
+  (function () {
+    const claimBtn     = document.getElementById('claimBtn');
+    if (!claimBtn) return;  // nothing to claim
+
+    const claimOverlay = document.getElementById('claimOverlay');
+    const closeClaimBtn= document.getElementById('closeClaimBtn');
+    const claimUuidText= document.getElementById('claimUuidText');
+    const claimUrl     = "{% url 'passport_claim' customer.phone %}";
+
+    function getCookie(name) {
+      const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return m ? decodeURIComponent(m.pop()) : '';
+    }
+
+    let generated = false;
+
+    function showClaimQr(uuidStr) {
+      if (!generated) {
+        new QRCode(document.getElementById('claim-qrcode-canvas'), {
+          text: uuidStr,
+          width: 220, height: 220,
+          colorDark: '#1a1a1a', colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H,
+        });
+        generated = true;
+      }
+      claimUuidText.textContent = uuidStr;
+      claimOverlay.classList.add('open');
+    }
+
+    claimBtn.addEventListener('click', async () => {
+      claimBtn.disabled = true;
+      try {
+        const res = await fetch(claimUrl, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        });
+        const data = await res.json();
+        if (data.success) {
+          showClaimQr(data.claim_uuid);
+        } else {
+          alert(data.error || 'Could not generate claim code.');
+        }
+      } catch (err) {
+        alert('Network error. Please try again.');
+        console.error(err);
+      } finally {
+        claimBtn.disabled = false;
+      }
+    });
+
+    function closeClaim() { claimOverlay.classList.remove('open'); }
+    closeClaimBtn.addEventListener('click', closeClaim);
+    claimOverlay.addEventListener('click', (e) => { if (e.target === claimOverlay) closeClaim(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeClaim(); });
+  })();
+</script>
+
+<!-- Pagination (client-side, 5 per page) -->
+<script>
+  (function () {
+    const PER_PAGE = 5;
+
+    function setupPager(listId, pagerId, itemSelector) {
+      const list = document.getElementById(listId);
+      const pager = document.getElementById(pagerId);
+      if (!list || !pager) return;
+
+      const items = Array.from(list.querySelectorAll(itemSelector));
+      const pages = Math.ceil(items.length / PER_PAGE);
+
+      // Only paginate when there are more than 5 items.
+      if (items.length <= PER_PAGE) {
+        pager.style.display = 'none';
+        return;
+      }
+
+      const info = pager.querySelector('.pager-info');
+      const prevBtn = pager.querySelector('[data-dir="prev"]');
+      const nextBtn = pager.querySelector('[data-dir="next"]');
+      let page = 1;
+
+      function render() {
+        const start = (page - 1) * PER_PAGE;
+        const end = start + PER_PAGE;
+        items.forEach((el, i) => {
+          el.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+        info.textContent = `Page ${page} of ${pages}`;
+        prevBtn.disabled = page === 1;
+        nextBtn.disabled = page === pages;
+      }
+
+      prevBtn.addEventListener('click', () => { if (page > 1) { page--; render(); } });
+      nextBtn.addEventListener('click', () => { if (page < pages) { page++; render(); } });
+
+      pager.style.display = 'flex';
+      render();
+    }
+
+    setupPager('orderList', 'orderPager', '.order-card');
+    setupPager('passportHistory', 'passportPager', '.passport-hist-item');
+  })();
+</script>
+
+<!-- Save stats card as image -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  (function () {
+    const shareBtn = document.getElementById('shareBtn');
+    const card = document.getElementById('shareCard');
+    if (!shareBtn || !card) return;
+
+    shareBtn.addEventListener('click', async () => {
+      const original = shareBtn.innerHTML;
+      shareBtn.disabled = true;
+      shareBtn.textContent = 'Preparing…';
+      try {
+        // Render so the exported width is ~1080px (IG story resolution).
+        const targetWidth = 1080;
+        const scale = card.offsetWidth ? targetWidth / card.offsetWidth : 3;
+        const canvas = await html2canvas(card, {
+          backgroundColor: null,
+          scale: scale,
+          useCORS: true,
+        });
+        const link = document.createElement('a');
+        link.download = 'shooties-stats-{{ customer.phone }}.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (err) {
+        alert('Could not save the card. Try a screenshot instead.');
+        console.error(err);
+      } finally {
+        shareBtn.disabled = false;
+        shareBtn.innerHTML = original;
+      }
+    });
+  })();
+</script>
+</body>
+</html>

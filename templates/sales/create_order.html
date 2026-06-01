@@ -56,6 +56,56 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 .feedback { font-size:13px; color:#b02a37; margin-top:6px; }
 @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
 .shake { animation: shake .35s ease; }
+
+/* QR Scanner */
+.btn-scan {
+  width:100%; padding:10px; margin-bottom:10px;
+  background:#fff7ed; border:1.5px solid #ff8c00; color:#ff8c00;
+  border-radius:8px; font-weight:700; font-size:14px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+}
+.btn-scan:hover { background:#ff8c00; color:#fff; }
+.scanner-wrap {
+  display:none;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:10px;
+}
+.scanner-wrap.open { display:flex; }
+#qr-reader {
+  width:100%; border-radius:8px; overflow:hidden;
+  border:2px solid #ff8c00;
+  background:#000;
+}
+.btn-stop-scan {
+  padding:7px; background:#f0f0f0; border:none; border-radius:6px;
+  font-size:13px; font-weight:600; color:#555; cursor:pointer;
+}
+.btn-stop-scan:hover { background:#e0e0e0; }
+
+/* QR Confirm Step */
+.qr-confirm {
+  display:none;
+  background:#fff7ed;
+  border:1.5px solid #ff8c00;
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:10px;
+}
+.qr-confirm.open { display:block; }
+.qr-confirm-name { font-size:17px; font-weight:800; color:#1a1a1a; margin-bottom:2px; }
+.qr-confirm-phone { font-size:13px; color:#888; margin-bottom:12px; }
+.qr-confirm-actions { display:flex; gap:8px; }
+.btn-confirm-yes {
+  flex:1; padding:9px; background:#ff8c00; color:#fff;
+  border:none; border-radius:8px; font-weight:700; cursor:pointer;
+}
+.btn-confirm-yes:hover { background:#e07a00; }
+.btn-confirm-no {
+  flex:1; padding:9px; background:#f0f0f0; color:#555;
+  border:none; border-radius:8px; font-weight:700; cursor:pointer;
+}
+.btn-confirm-no:hover { background:#e0e0e0; }
 </style>
 {% endblock %}
 
@@ -63,8 +113,17 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 <div class="create-order-page">
   <div class="header-row">
     <h1>Create New Order</h1>
-    <button type="button" class="btn btn-ghost" id="openCustomerBtn">👥 Choose / Create Member</button>
+    <div style="display:flex; gap:8px;">
+      <button type="button" class="btn btn-ghost" id="openPassportBtn">🎟️ Shooties Passport Scanner</button>
+      <button type="button" class="btn btn-ghost" id="openCustomerBtn">👥 Choose / Create Member</button>
+    </div>
   </div>
+
+  {% if error %}
+  <div style="background:#fdecea; border:1px solid #f5c6cb; color:#b02a37; padding:10px 14px; border-radius:8px; margin-bottom:12px; font-weight:600;">
+    {{ error }}
+  </div>
+  {% endif %}
 
   <!-- Selected customer preview -->
   <div id="selectedCustomerWrap" style="display:none; margin-bottom:12px;">
@@ -96,6 +155,8 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 
       <label for="phone_display" style="margin-top:8px;">Phone (Member Only):</label>
       <input type="tel" id="phone_display" name="phone_display" readonly placeholder="Select or create member to autofill">
+
+      <input type="hidden" name="passport_claim_uuid" id="passport_claim_uuid" value="">
 
       <hr style="margin:14px 0; border-color:#f0f0f0;">
 
@@ -177,8 +238,33 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 <!-- Customer modal -->
 <div id="customerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle">
   <h3 id="customerModalTitle">Find existing member</h3>
-  <div style="display:flex;gap:8px;margin-bottom:10px;">
-    <input id="customerSearch" type="text" placeholder="Search by name or phone…" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd;">
+  <!-- QR Scan button -->
+  <button type="button" class="btn-scan" id="startScanBtn">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/>
+    </svg>
+    Scan Member QR
+  </button>
+
+  <!-- Scanner container -->
+  <div class="scanner-wrap" id="scannerWrap">
+    <div id="qr-reader"></div>
+    <button type="button" class="btn-stop-scan" id="stopScanBtn">✕ Stop Camera</button>
+  </div>
+
+  <!-- Confirm step after scan -->
+  <div class="qr-confirm" id="qrConfirm">
+    <div class="qr-confirm-name" id="qrConfirmName"></div>
+    <div class="qr-confirm-phone" id="qrConfirmPhone"></div>
+    <div class="qr-confirm-actions">
+      <button type="button" class="btn-confirm-yes" id="qrConfirmYes">✓ Use this member</button>
+      <button type="button" class="btn-confirm-no" id="qrConfirmNo">✕ Scan again</button>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <input id="customerSearch" type="text" placeholder="Search by name or phone..." style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd;">
     <button type="button" class="btn btn-secondary" id="modalCreateBtn">Create</button>
   </div>
   <ul id="customerResults" style="list-style:none;padding:0;margin:0;max-height:240px;overflow:auto;border-top:1px solid #f0f0f0;">
@@ -200,6 +286,32 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
     <button type="button" class="btn btn-ghost" id="closeModalBtn">Close</button>
   </div>
   <div id="modalFeedback" class="feedback" style="display:none;"></div>
+</div>
+
+<!-- Shooties Passport Scanner modal -->
+<div id="passportModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="passportModalTitle">
+  <h3 id="passportModalTitle">🎟️ Scan Shooties Passport</h3>
+  <p class="muted" style="margin-top:0;">Scan the customer's free-cup QR code to redeem.</p>
+
+  <div class="scanner-wrap open" id="passportScannerWrap">
+    <div id="passport-qr-reader"></div>
+    <button type="button" class="btn-stop-scan" id="passportStopBtn">✕ Stop Camera</button>
+  </div>
+
+  <div class="qr-confirm" id="passportConfirm">
+    <div class="qr-confirm-name" id="passportConfirmName"></div>
+    <div class="qr-confirm-phone" id="passportConfirmPhone"></div>
+    <div class="qr-confirm-actions">
+      <button type="button" class="btn-confirm-yes" id="passportConfirmYes">✓ Redeem free cup</button>
+      <button type="button" class="btn-confirm-no" id="passportConfirmNo">✕ Scan again</button>
+    </div>
+  </div>
+
+  <div id="passportFeedback" class="feedback" style="display:none;"></div>
+
+  <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+    <button type="button" class="btn btn-ghost" id="passportCloseBtn">Close</button>
+  </div>
 </div>
 
 <div id="modalBackdrop" class="modal-backdrop" tabindex="-1"></div>
@@ -334,6 +446,15 @@ const csrftoken = getCookie('csrftoken');
 
   function addToCart(smoothieId, name, basePrice, addons, qty) {
     qty = Math.max(1, parseInt(qty) || 1);
+
+    // Shooties Passport orders may contain exactly 1 cup — a new selection
+    // replaces whatever was in the cart.
+    if (window.__passportMode) {
+      cart = [{ uid: uid(), smoothieId, name, basePrice, addons, qty: 1 }];
+      renderCart();
+      return;
+    }
+
     // Look for an existing entry with same smoothie + same addon set to merge qty
     const addonKey = addons.map(a => a.id).sort().join(',');
     const existing = cart.find(e =>
@@ -459,6 +580,8 @@ const csrftoken = getCookie('csrftoken');
     if (idx === -1) return;
 
     if (action === 'inc') {
+      // Passport orders are capped at a single cup.
+      if (window.__passportMode) return;
       cart[idx].qty += 1;
     } else if (action === 'dec') {
       cart[idx].qty -= 1;
@@ -640,11 +763,381 @@ const csrftoken = getCookie('csrftoken');
     nameField.readOnly = false;
     nameField.style.backgroundColor = '';
     document.getElementById('new_phone').value = '';
+    if (window.PassportMode) window.PassportMode.exit();
   });
+
+  /* Expose hooks for the Passport / QR scripts (defined in later IIFEs) */
+  window._updateOrderSubmitState = updateSubmitAvailability;
+  window._recalcCart = renderCart;
+  // Trim the cart down to a single cup (used when entering Passport mode).
+  window._enforcePassportSingleCup = function () {
+    if (cart.length === 0) return;
+    const first = cart[0];
+    first.qty = 1;
+    cart = [first];
+    renderCart();
+  };
 
   /* initial render */
   renderCart();
 
+})();
+</script>
+
+<!-- QR Scanner logic (html5-qrcode) -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+(function () {
+  const startScanBtn  = document.getElementById('startScanBtn');
+  const stopScanBtn   = document.getElementById('stopScanBtn');
+  const scannerWrap   = document.getElementById('scannerWrap');
+  const qrConfirm     = document.getElementById('qrConfirm');
+  const qrConfirmName = document.getElementById('qrConfirmName');
+  const qrConfirmPhone= document.getElementById('qrConfirmPhone');
+  const qrConfirmYes  = document.getElementById('qrConfirmYes');
+  const qrConfirmNo   = document.getElementById('qrConfirmNo');
+  const checkPhoneUrl = "{% url 'customers_check_phone' %}";
+
+  let html5QrCode = null;
+  let pendingCustomer = null;  // { id, name, phone }
+
+  // ── Extract phone from scanned URL ──────────────────────────────────────
+  // Expected format: http(s)://domain/<phone>/
+  function extractPhone(rawText) {
+    try {
+      const url = new URL(rawText);
+      // pathname = "/<phone>/"  →  strip slashes
+      const parts = url.pathname.replace(/^\/|\/$/g, '').split('/');
+      const candidate = parts[parts.length - 1];
+      // must be digits-only and reasonable length
+      if (/^\d{6,15}$/.test(candidate)) return candidate;
+    } catch (_) {
+      // not a URL — try treating raw text as phone directly
+      const clean = rawText.replace(/\D/g, '');
+      if (/^\d{6,15}$/.test(clean)) return clean;
+    }
+    return null;
+  }
+
+  // ── Start camera ─────────────────────────────────────────────────────────
+  async function startScanner() {
+    scannerWrap.classList.add('open');
+    startScanBtn.style.display = 'none';
+    qrConfirm.classList.remove('open');
+
+    html5QrCode = new Html5Qrcode('qr-reader');
+    try {
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        onScanSuccess,
+        () => {}   // suppress verbose errors
+      );
+    } catch (err) {
+      scannerWrap.classList.remove('open');
+      startScanBtn.style.display = '';
+      alert('Could not access camera. Please allow camera permission and try again.');
+      console.error(err);
+    }
+  }
+
+  // ── Stop camera ──────────────────────────────────────────────────────────
+  async function stopScanner() {
+    if (html5QrCode) {
+      try { await html5QrCode.stop(); } catch (_) {}
+      html5QrCode.clear();
+      html5QrCode = null;
+    }
+    scannerWrap.classList.remove('open');
+    startScanBtn.style.display = '';
+  }
+
+  // ── On successful scan ───────────────────────────────────────────────────
+  async function onScanSuccess(decodedText) {
+    await stopScanner();
+
+    const phone = extractPhone(decodedText);
+    if (!phone) {
+      alert('QR code not recognized. Make sure you scan a Shooties member QR.');
+      return;
+    }
+
+    // Look up customer via AJAX
+    try {
+      const res = await fetch(`${checkPhoneUrl}?phone=${encodeURIComponent(phone)}`, {
+        credentials: 'same-origin'
+      });
+      const data = await res.json();
+      if (data.exists) {
+        pendingCustomer = { id: data.id, name: data.name, phone: data.phone };
+        showConfirm(data.name, data.phone);
+      } else {
+        alert(`No member found for phone ${phone}. Ask them to register at /register/`);
+      }
+    } catch (err) {
+      alert('Network error while looking up member. Please try again.');
+      console.error(err);
+    }
+  }
+
+  // ── Show confirmation step ───────────────────────────────────────────────
+  function showConfirm(name, phone) {
+    qrConfirmName.textContent  = name;
+    qrConfirmPhone.textContent = phone;
+    qrConfirm.classList.add('open');
+  }
+
+  // ── Confirm: use this member ─────────────────────────────────────────────
+  qrConfirmYes.addEventListener('click', () => {
+    if (!pendingCustomer) return;
+    // call the existing useCustomer function defined in the main script
+    useCustomer(pendingCustomer.id, pendingCustomer.name, pendingCustomer.phone);
+    qrConfirm.classList.remove('open');
+    // close the whole customer modal
+    document.getElementById('customerModal').style.display = 'none';
+    document.getElementById('modalBackdrop').style.display = 'none';
+    pendingCustomer = null;
+  });
+
+  // ── Confirm: scan again ──────────────────────────────────────────────────
+  qrConfirmNo.addEventListener('click', () => {
+    qrConfirm.classList.remove('open');
+    pendingCustomer = null;
+    startScanner();
+  });
+
+  // ── Button listeners ─────────────────────────────────────────────────────
+  startScanBtn.addEventListener('click', startScanner);
+  stopScanBtn.addEventListener('click', stopScanner);
+
+  // Stop camera if modal closes
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  [modalBackdrop, closeModalBtn].forEach(el => {
+    el?.addEventListener('click', () => {
+      stopScanner();
+      qrConfirm.classList.remove('open');
+    });
+  });
+  document.addEventListener('keydown', async (e) => {
+    if (e.key === 'Escape') { await stopScanner(); qrConfirm.classList.remove('open'); }
+  });
+
+  // Expose useCustomer to this scope (it's defined inside the IIFE above,
+  // so we grab it via the window bridge set there)
+  function useCustomer(id, name, phone) {
+    // replicate the same logic as the main useCustomer function
+    const selectedCustomerWrap   = document.getElementById('selectedCustomerWrap');
+    const selectedCustomerName   = document.getElementById('selectedCustomerName');
+    const selectedCustomerPhone  = document.getElementById('selectedCustomerPhone');
+    const selectedCustomerIdHidden = document.getElementById('selected_customer_id');
+    const phoneDisplay           = document.getElementById('phone_display');
+    const cancelCustomerBtn      = document.getElementById('cancelCustomerBtn');
+
+    selectedCustomerWrap.style.display = 'block';
+    selectedCustomerName.textContent   = name;
+    selectedCustomerPhone.textContent  = phone;
+    selectedCustomerIdHidden.value     = id || '';
+    phoneDisplay.value                 = phone || '';
+    document.getElementById('id_name').value           = name || '';
+    document.getElementById('id_name').readOnly        = true;
+    document.getElementById('id_name').style.backgroundColor = '#f6f6f6';
+    document.getElementById('new_phone').value         = phone || '';
+    cancelCustomerBtn.style.display = 'inline-block';
+
+    if (window._updateOrderSubmitState) window._updateOrderSubmitState();
+  }
+})();
+</script>
+
+<!-- Shooties Passport scanner logic -->
+<script>
+(function () {
+  const openBtn      = document.getElementById('openPassportBtn');
+  const modal        = document.getElementById('passportModal');
+  const backdrop     = document.getElementById('modalBackdrop');
+  const closeBtn     = document.getElementById('passportCloseBtn');
+  const stopBtn      = document.getElementById('passportStopBtn');
+  const scannerWrap  = document.getElementById('passportScannerWrap');
+  const confirmBox   = document.getElementById('passportConfirm');
+  const confirmName  = document.getElementById('passportConfirmName');
+  const confirmPhone = document.getElementById('passportConfirmPhone');
+  const confirmYes   = document.getElementById('passportConfirmYes');
+  const confirmNo    = document.getElementById('passportConfirmNo');
+  const feedback     = document.getElementById('passportFeedback');
+  const lookupUrl    = "{% url 'passport_lookup' %}";
+
+  let html5QrCode = null;
+  let pending = null;  // { claim_uuid, customer_id, name, phone }
+
+  function showFeedback(msg) {
+    feedback.textContent = msg;
+    feedback.style.display = msg ? 'block' : 'none';
+  }
+
+  function extractUuid(text) {
+    const m = String(text).trim().match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+    return m ? m[0] : null;
+  }
+
+  async function startScanner() {
+    scannerWrap.classList.add('open');
+    confirmBox.classList.remove('open');
+    showFeedback('');
+    html5QrCode = new Html5Qrcode('passport-qr-reader');
+    try {
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        onScanSuccess,
+        () => {}
+      );
+    } catch (err) {
+      showFeedback('Could not access camera. Please allow camera permission.');
+      console.error(err);
+    }
+  }
+
+  async function stopScanner() {
+    if (html5QrCode) {
+      try { await html5QrCode.stop(); } catch (_) {}
+      try { html5QrCode.clear(); } catch (_) {}
+      html5QrCode = null;
+    }
+  }
+
+  async function onScanSuccess(decodedText) {
+    await stopScanner();
+    scannerWrap.classList.remove('open');
+
+    const uuid = extractUuid(decodedText);
+    if (!uuid) {
+      showFeedback('QR not recognized. Scan a valid passport claim code.');
+      scannerWrap.classList.add('open');
+      startScanner();
+      return;
+    }
+
+    try {
+      const res = await fetch(`${lookupUrl}?uuid=${encodeURIComponent(uuid)}`, { credentials: 'same-origin' });
+      const data = await res.json();
+      if (data.valid) {
+        pending = data;
+        confirmName.textContent = data.name;
+        confirmPhone.textContent = data.phone + ' · Free cup';
+        confirmBox.classList.add('open');
+      } else {
+        showFeedback(data.error || 'Invalid passport.');
+        scannerWrap.classList.add('open');
+        startScanner();
+      }
+    } catch (err) {
+      showFeedback('Network error while looking up passport.');
+      console.error(err);
+    }
+  }
+
+  function applyMember(d) {
+    // mirror useCustomer from main script
+    document.getElementById('selectedCustomerWrap').style.display = 'block';
+    document.getElementById('selectedCustomerName').textContent = d.name;
+    document.getElementById('selectedCustomerPhone').textContent = d.phone;
+    document.getElementById('selected_customer_id').value = d.customer_id || '';
+    document.getElementById('phone_display').value = d.phone || '';
+    const nameField = document.getElementById('id_name');
+    nameField.value = d.name || '';
+    nameField.readOnly = true;
+    nameField.style.backgroundColor = '#f6f6f6';
+    document.getElementById('new_phone').value = d.phone || '';
+    document.getElementById('passport_claim_uuid').value = d.claim_uuid || '';
+    document.getElementById('cancelCustomerBtn').style.display = 'inline-block';
+    if (window.PassportMode) window.PassportMode.enter();
+    if (window._updateOrderSubmitState) window._updateOrderSubmitState();
+  }
+
+  function openModal() {
+    modal.style.display = 'block';
+    backdrop.style.display = 'block';
+    showFeedback('');
+    confirmBox.classList.remove('open');
+    startScanner();
+  }
+  async function closeModal() {
+    await stopScanner();
+    modal.style.display = 'none';
+    backdrop.style.display = 'none';
+    confirmBox.classList.remove('open');
+  }
+
+  openBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  stopBtn.addEventListener('click', async () => { await stopScanner(); scannerWrap.classList.remove('open'); });
+  backdrop.addEventListener('click', closeModal);
+
+  confirmYes.addEventListener('click', () => {
+    if (pending) applyMember(pending);
+    pending = null;
+    closeModal();
+  });
+  confirmNo.addEventListener('click', () => {
+    pending = null;
+    confirmBox.classList.remove('open');
+    scannerWrap.classList.add('open');
+    startScanner();
+  });
+})();
+</script>
+
+<!-- Payment lock + 1-cup limit for Shooties Passport mode -->
+<script>
+(function () {
+  const paySel = document.getElementById('id_payment_method');
+
+  function passportOption() {
+    if (!paySel) return null;
+    for (const o of paySel.options) {
+      if (o.text.trim().toLowerCase() === 'shooties passport') return o;
+    }
+    return null;
+  }
+  const passportOpt = passportOption();
+
+  // By default the Shooties Passport option is shown but not selectable.
+  if (passportOpt) passportOpt.disabled = true;
+
+  window.__passportMode = false;
+
+  function setRegularOptionsDisabled(disabled) {
+    if (!paySel) return;
+    for (const o of paySel.options) {
+      if (o === passportOpt || o.value === '') continue;
+      o.disabled = disabled;   // lock Cash / QRIS while in passport mode
+    }
+  }
+
+  // The cart (managed by the main IIFE) enforces the single-cup rule for us:
+  // while __passportMode is true, addToCart replaces the cart with one cup, and
+  // window._enforcePassportSingleCup trims any existing cart to a single cup.
+
+  window.PassportMode = {
+    enter() {
+      if (!paySel) return;
+      window.__passportMode = true;
+      if (passportOpt) { passportOpt.disabled = false; paySel.value = passportOpt.value; }
+      setRegularOptionsDisabled(true);
+      paySel.dispatchEvent(new Event('change'));
+      // Reduce any existing cart to a single cup.
+      if (window._enforcePassportSingleCup) window._enforcePassportSingleCup();
+    },
+    exit() {
+      window.__passportMode = false;
+      setRegularOptionsDisabled(false);
+      if (passportOpt) passportOpt.disabled = true;
+      const uuidField = document.getElementById('passport_claim_uuid');
+      if (uuidField) uuidField.value = '';
+      if (paySel) { paySel.value = ''; paySel.dispatchEvent(new Event('change')); }
+    }
+  };
 })();
 </script>
 {% endblock %}
