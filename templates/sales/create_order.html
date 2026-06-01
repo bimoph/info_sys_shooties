@@ -101,10 +101,17 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 <div class="create-order-page">
   <div class="header-row">
     <h1>Create New Order</h1>
-    <div>
+    <div style="display:flex; gap:8px;">
+      <button type="button" class="btn btn-ghost" id="openPassportBtn">🎟️ Shooties Passport Scanner</button>
       <button type="button" class="btn btn-ghost" id="openCustomerBtn">👥 Choose / Create Member</button>
     </div>
   </div>
+
+  {% if error %}
+  <div style="background:#fdecea; border:1px solid #f5c6cb; color:#b02a37; padding:10px 14px; border-radius:8px; margin-bottom:12px; font-weight:600;">
+    {{ error }}
+  </div>
+  {% endif %}
 
   <!-- Selected customer preview -->
   <div id="selectedCustomerWrap" style="display:none; margin-bottom:12px;">
@@ -138,6 +145,7 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
       <!-- Hidden fields -->
       <input type="hidden" name="selected_customer_id" id="selected_customer_id" value="">
       <input type="hidden" name="new_phone" id="new_phone" value="">
+      <input type="hidden" name="passport_claim_uuid" id="passport_claim_uuid" value="">
       <input type="hidden" name="total_price" id="total_price_hidden" value="0">
 
       <hr style="margin:12px 0; border-color:#f0f0f0;">
@@ -252,6 +260,32 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
   </div>
 </div>
 
+<!-- Shooties Passport Scanner modal -->
+<div id="passportModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="passportModalTitle">
+  <h3 id="passportModalTitle">🎟️ Scan Shooties Passport</h3>
+  <p class="muted" style="margin-top:0;">Scan the customer's free-cup QR code to redeem.</p>
+
+  <div class="scanner-wrap open" id="passportScannerWrap">
+    <div id="passport-qr-reader"></div>
+    <button type="button" class="btn-stop-scan" id="passportStopBtn">✕ Stop Camera</button>
+  </div>
+
+  <div class="qr-confirm" id="passportConfirm">
+    <div class="qr-confirm-name" id="passportConfirmName"></div>
+    <div class="qr-confirm-phone" id="passportConfirmPhone"></div>
+    <div class="qr-confirm-actions">
+      <button type="button" class="btn-confirm-yes" id="passportConfirmYes">✓ Redeem free cup</button>
+      <button type="button" class="btn-confirm-no" id="passportConfirmNo">✕ Scan again</button>
+    </div>
+  </div>
+
+  <div id="passportFeedback" class="feedback" style="display:none;"></div>
+
+  <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+    <button type="button" class="btn btn-ghost" id="passportCloseBtn">Close</button>
+  </div>
+</div>
+
 <div id="modalBackdrop" class="modal-backdrop" tabindex="-1"></div>
 {% endblock %}
 
@@ -311,6 +345,7 @@ const csrftoken = getCookie('csrftoken');
 
   // init
   updateCartUI();
+  window._recalcCart = updateCartUI;
 
   // Event: increase/decrease buttons (delegated)
   menuList.addEventListener('click', (e) => {
@@ -524,6 +559,7 @@ const csrftoken = getCookie('csrftoken');
     document.getElementById('id_name').style.backgroundColor = '';
     document.getElementById('new_phone').value = '';
     cancelCustomerBtn.style.display = 'none';
+    if (window.PassportMode) window.PassportMode.exit();
   });
   'use strict';
 
@@ -813,6 +849,232 @@ window._updateOrderSubmitState = updateSubmitAvailability;
 
     if (window._updateOrderSubmitState) window._updateOrderSubmitState();
   }
+})();
+</script>
+
+<!-- Shooties Passport scanner logic -->
+<script>
+(function () {
+  const openBtn      = document.getElementById('openPassportBtn');
+  const modal        = document.getElementById('passportModal');
+  const backdrop     = document.getElementById('modalBackdrop');
+  const closeBtn     = document.getElementById('passportCloseBtn');
+  const stopBtn      = document.getElementById('passportStopBtn');
+  const scannerWrap  = document.getElementById('passportScannerWrap');
+  const confirmBox   = document.getElementById('passportConfirm');
+  const confirmName  = document.getElementById('passportConfirmName');
+  const confirmPhone = document.getElementById('passportConfirmPhone');
+  const confirmYes   = document.getElementById('passportConfirmYes');
+  const confirmNo    = document.getElementById('passportConfirmNo');
+  const feedback     = document.getElementById('passportFeedback');
+  const lookupUrl    = "{% url 'passport_lookup' %}";
+
+  let html5QrCode = null;
+  let pending = null;  // { claim_uuid, customer_id, name, phone }
+
+  function showFeedback(msg) {
+    feedback.textContent = msg;
+    feedback.style.display = msg ? 'block' : 'none';
+  }
+
+  function extractUuid(text) {
+    const m = String(text).trim().match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+    return m ? m[0] : null;
+  }
+
+  async function startScanner() {
+    scannerWrap.classList.add('open');
+    confirmBox.classList.remove('open');
+    showFeedback('');
+    html5QrCode = new Html5Qrcode('passport-qr-reader');
+    try {
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        onScanSuccess,
+        () => {}
+      );
+    } catch (err) {
+      showFeedback('Could not access camera. Please allow camera permission.');
+      console.error(err);
+    }
+  }
+
+  async function stopScanner() {
+    if (html5QrCode) {
+      try { await html5QrCode.stop(); } catch (_) {}
+      try { html5QrCode.clear(); } catch (_) {}
+      html5QrCode = null;
+    }
+  }
+
+  async function onScanSuccess(decodedText) {
+    await stopScanner();
+    scannerWrap.classList.remove('open');
+
+    const uuid = extractUuid(decodedText);
+    if (!uuid) {
+      showFeedback('QR not recognized. Scan a valid passport claim code.');
+      scannerWrap.classList.add('open');
+      startScanner();
+      return;
+    }
+
+    try {
+      const res = await fetch(`${lookupUrl}?uuid=${encodeURIComponent(uuid)}`, { credentials: 'same-origin' });
+      const data = await res.json();
+      if (data.valid) {
+        pending = data;
+        confirmName.textContent = data.name;
+        confirmPhone.textContent = data.phone + ' · Free cup';
+        confirmBox.classList.add('open');
+      } else {
+        showFeedback(data.error || 'Invalid passport.');
+        scannerWrap.classList.add('open');
+        startScanner();
+      }
+    } catch (err) {
+      showFeedback('Network error while looking up passport.');
+      console.error(err);
+    }
+  }
+
+  function applyMember(d) {
+    // mirror useCustomer from main script
+    document.getElementById('selectedCustomerWrap').style.display = 'block';
+    document.getElementById('selectedCustomerName').textContent = d.name;
+    document.getElementById('selectedCustomerPhone').textContent = d.phone;
+    document.getElementById('selected_customer_id').value = d.customer_id || '';
+    document.getElementById('phone_display').value = d.phone || '';
+    const nameField = document.getElementById('id_name');
+    nameField.value = d.name || '';
+    nameField.readOnly = true;
+    nameField.style.backgroundColor = '#f6f6f6';
+    document.getElementById('new_phone').value = d.phone || '';
+    document.getElementById('passport_claim_uuid').value = d.claim_uuid || '';
+    document.getElementById('cancelCustomerBtn').style.display = 'inline-block';
+    if (window.PassportMode) window.PassportMode.enter();
+    if (window._updateOrderSubmitState) window._updateOrderSubmitState();
+  }
+
+  function openModal() {
+    modal.style.display = 'block';
+    backdrop.style.display = 'block';
+    showFeedback('');
+    confirmBox.classList.remove('open');
+    startScanner();
+  }
+  async function closeModal() {
+    await stopScanner();
+    modal.style.display = 'none';
+    backdrop.style.display = 'none';
+    confirmBox.classList.remove('open');
+  }
+
+  openBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  stopBtn.addEventListener('click', async () => { await stopScanner(); scannerWrap.classList.remove('open'); });
+  backdrop.addEventListener('click', closeModal);
+
+  confirmYes.addEventListener('click', () => {
+    if (pending) applyMember(pending);
+    pending = null;
+    closeModal();
+  });
+  confirmNo.addEventListener('click', () => {
+    pending = null;
+    confirmBox.classList.remove('open');
+    scannerWrap.classList.add('open');
+    startScanner();
+  });
+})();
+</script>
+
+<!-- Payment lock + 1-cup limit for Shooties Passport mode -->
+<script>
+(function () {
+  const paySel   = document.getElementById('id_payment_method');
+  const menuList = document.getElementById('menuList');
+
+  function passportOption() {
+    if (!paySel) return null;
+    for (const o of paySel.options) {
+      if (o.text.trim().toLowerCase() === 'shooties passport') return o;
+    }
+    return null;
+  }
+  const passportOpt = passportOption();
+
+  // By default the Shooties Passport option is shown but not selectable.
+  if (passportOpt) passportOpt.disabled = true;
+
+  window.__passportMode = false;
+
+  function setRegularOptionsDisabled(disabled) {
+    if (!paySel) return;
+    for (const o of paySel.options) {
+      if (o === passportOpt || o.value === '') continue;
+      o.disabled = disabled;   // lock Cash / QRIS while in passport mode
+    }
+  }
+
+  function qtyInputs() {
+    return Array.from(document.querySelectorAll('.smoothie-qty'));
+  }
+
+  // Cap the whole order at exactly 1 cup: a new selection replaces the old.
+  function enforceSingleCup(changed) {
+    if (!window.__passportMode) return;
+    const inputs = qtyInputs();
+    const total = inputs.reduce((s, i) => s + (parseInt(i.value) || 0), 0);
+    if (total > 1) {
+      inputs.forEach(i => { if (i !== changed) i.value = 0; });
+      changed.value = 1;
+      if (window._recalcCart) window._recalcCart();
+    }
+  }
+
+  if (menuList) {
+    menuList.addEventListener('click', (e) => {
+      if (!window.__passportMode) return;
+      const incBtn = e.target.closest('.increase-btn');
+      if (incBtn) {
+        const input = incBtn.closest('.menu-item').querySelector('.smoothie-qty');
+        setTimeout(() => enforceSingleCup(input), 0);
+      }
+    });
+    menuList.addEventListener('input', (e) => {
+      if (!window.__passportMode) return;
+      if (e.target.matches('.smoothie-qty')) {
+        setTimeout(() => enforceSingleCup(e.target), 0);
+      }
+    });
+  }
+
+  window.PassportMode = {
+    enter() {
+      if (!paySel) return;
+      window.__passportMode = true;
+      if (passportOpt) { passportOpt.disabled = false; paySel.value = passportOpt.value; }
+      setRegularOptionsDisabled(true);
+      paySel.dispatchEvent(new Event('change'));
+      // Reduce any existing cart to a single cup.
+      let kept = false;
+      qtyInputs().forEach(i => {
+        const q = parseInt(i.value) || 0;
+        if (q > 0 && !kept) { i.value = 1; kept = true; } else { i.value = 0; }
+      });
+      if (window._recalcCart) window._recalcCart();
+    },
+    exit() {
+      window.__passportMode = false;
+      setRegularOptionsDisabled(false);
+      if (passportOpt) passportOpt.disabled = true;
+      const uuidField = document.getElementById('passport_claim_uuid');
+      if (uuidField) uuidField.value = '';
+      if (paySel) { paySel.value = ''; paySel.dispatchEvent(new Event('change')); }
+    }
+  };
 })();
 </script>
 {% endblock %}

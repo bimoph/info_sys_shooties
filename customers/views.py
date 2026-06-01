@@ -9,6 +9,8 @@ from sales.models import Order
 from customers.utils import find_customer_by_phone, normalize_phone  # import helper
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 
 
@@ -118,8 +120,14 @@ def register_customer(request):
     })
 
 
+@ensure_csrf_cookie
 def member_profile(request, phone):
     customer = get_object_or_404(Customer, phone=phone)
+
+    # Shooties Passport: active card (auto-created if none) + claimed history.
+    active_passport = customer.active_passport()
+    passport_history = customer.passports.filter(free_claimed=True).order_by('-claimed_at')
+
     orders = customer.order_set.prefetch_related('orderitem_set__smoothie').order_by('-created_at')
 
     total_orders = orders.count()
@@ -130,13 +138,38 @@ def member_profile(request, phone):
         for item in order.orderitem_set.all()
     )
 
-    # Format total spent compactly (e.g. 150rb)
-    if total_spent >= 1_000_000:
-        total_spent_formatted = f"{total_spent / 1_000_000:.1f}jt"
-    elif total_spent >= 1_000:
-        total_spent_formatted = f"{int(total_spent / 1_000)}rb"
+    def rupiah_compact(value):
+        if value >= 1_000_000:
+            return f"{value / 1_000_000:.1f}jt"
+        elif value >= 1_000:
+            return f"{int(value / 1_000)}rb"
+        return str(int(value))
+
+    total_spent_formatted = rupiah_compact(total_spent)
+
+    # ── Shareable stats ────────────────────────────────────────────────
+    from collections import Counter
+    from datetime import timedelta
+
+    passports_redeemed = passport_history.count()
+
+    week_ago = timezone.now() - timedelta(days=7)
+    weekly_cups = 0
+    drink_counter = Counter()
+    for order in orders:
+        for item in order.orderitem_set.all():
+            drink_counter[item.smoothie.name] += item.quantity
+            if order.created_at and order.created_at >= week_ago:
+                weekly_cups += item.quantity
+
+    if drink_counter:
+        favorite_drink, favorite_drink_count = drink_counter.most_common(1)[0]
     else:
-        total_spent_formatted = str(total_spent)
+        favorite_drink, favorite_drink_count = None, 0
+
+    avg_cup_price = (total_spent / total_cups) if total_cups else 0
+    money_saved = int(round(avg_cup_price * passports_redeemed))
+    money_saved_formatted = rupiah_compact(money_saved)
 
     member_url = request.build_absolute_uri(reverse('member_profile', args=[customer.phone]))
 
@@ -148,6 +181,51 @@ def member_profile(request, phone):
         'total_cups': total_cups,
         'welcome': request.GET.get('welcome') == '1',
         'member_url': member_url,
+        'active_passport': active_passport,
+        'passport_history': passport_history,
+        'passport_goal': Customer.PASSPORT_GOAL,
+        'passports_redeemed': passports_redeemed,
+        'weekly_cups': weekly_cups,
+        'favorite_drink': favorite_drink,
+        'favorite_drink_count': favorite_drink_count,
+        'money_saved_formatted': money_saved_formatted,
+    })
+
+
+# POST: /{phone}/passport/claim/  — customer taps "Claim", generates a claim UUID
+@require_POST
+def passport_claim(request, phone):
+    customer = get_object_or_404(Customer, phone=phone)
+    passport = customer.active_passport()
+    if not passport.can_claim:
+        return JsonResponse({'success': False, 'error': 'Passport not complete yet.'}, status=400)
+    claim_uuid = passport.generate_claim_uuid()
+    return JsonResponse({'success': True, 'claim_uuid': str(claim_uuid)})
+
+
+# GET: /customers/passport/lookup/?uuid=...  — cashier scans the claim QR
+@login_required
+def passport_lookup(request):
+    claim_uuid = request.GET.get('uuid', '').strip()
+    if not claim_uuid:
+        return JsonResponse({'valid': False, 'error': 'Missing UUID'}, status=400)
+
+    from .models import Passport
+    passport = Passport.objects.filter(claim_uuid=claim_uuid).select_related('customer').first()
+    if not passport:
+        return JsonResponse({'valid': False, 'error': 'Passport not found.'})
+    if passport.free_claimed:
+        return JsonResponse({'valid': False, 'error': 'This free cup was already claimed.'})
+    if not passport.can_claim:
+        return JsonResponse({'valid': False, 'error': 'Passport not complete yet.'})
+
+    c = passport.customer
+    return JsonResponse({
+        'valid': True,
+        'claim_uuid': claim_uuid,
+        'customer_id': c.id,
+        'name': c.name,
+        'phone': c.phone,
     })
 
 

@@ -35,6 +35,7 @@ urlpatterns = [
     path('sales/', include('sales.urls')),
     path('analytics/', include('analytics.urls')),
     path('register/', views_customers.register_customer, name='customer_register'),
+    path('<str:phone>/passport/claim/', views_customers.passport_claim, name='passport_claim'),
     path('<str:phone>/', views_customers.member_profile, name='member_profile'),
     
 

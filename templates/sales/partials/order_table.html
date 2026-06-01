@@ -1,106 +1,78 @@
 {% load currency_filters %}
-<style>
-    .dropdown {
-        position: relative;
-        display: inline-block;
-    }
-
-    .menu-button {
-        background: none;
-        border: none;
-        font-size: 18px;
-        cursor: pointer;
-    }
-
-    .dropdown-content {
-        display: none;
-        position: fixed;
-        background-color: #f9f9f9;
-        min-width: 150px;
-        z-index: 9999;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-
-    .dropdown-content button {
-        width: 100%;
-        padding: 10px;
-        text-align: left;
-        background: white;
-        border: none;
-        cursor: pointer;
-    }
-
-    .dropdown-content button:hover {
-        background-color: #f0f0f0;
-    }
-
-    /* .dropdown:hover .dropdown-content {
-        display: block;
-    } */
-
-    tbody, tr, td {
-  overflow: visible;
-}
-
-
-</style>
 <thead>
     <tr>
         <th>
-            {% if table_type == "pending" %}Created At
+            {% if table_type == "pending" %}Created
             {% elif table_type == "ready" %}Ready At
             {% elif table_type == "served" %}Served At
             {% endif %}
         </th>
         <th>Name</th>
-        
         <th>Total</th>
-        <th>Menu</th>
+        <th>Items</th>
         <th>Actions</th>
     </tr>
 </thead>
 <tbody>
     {% for order in orders %}
-    <tr data-order-id="{{ order.id }}" class="overflow-visible">
-        <td>
-            {% if table_type == "pending" %}{{ order.created_at|date:"Y-m-d H:i" }}
-            {% elif table_type == "ready" %}{{ order.ready_at|date:"Y-m-d H:i" }}
-            {% elif table_type == "served" %}{{ order.served_at|date:"Y-m-d H:i" }}
+    <tr data-order-id="{{ order.id }}">
+        <td class="td-time">
+            {% if table_type == "pending" %}{{ order.created_at|date:"H:i" }}
+            {% elif table_type == "ready" %}{{ order.ready_at|date:"H:i" }}
+            {% elif table_type == "served" %}{{ order.served_at|date:"H:i" }}
             {% endif %}
         </td>
-        <td>{{ order.name }}</td>
-        
-        <td>{{ order.total_price|rupiah }}</td>
+        <td class="td-name">{{ order.name }}</td>
+        <td class="td-total">{{ order.total_price|rupiah }}</td>
         <td>
-            <ul>
+            <ul class="menu-list">
                 {% for item in order.orderitem_set.all %}
-                <li>{{ item.smoothie.name }} - {{ item.quantity }}</li>
+                <li>{{ item.smoothie.name }} × {{ item.quantity }}</li>
                 {% endfor %}
             </ul>
         </td>
         <td>
-            {% if table_type == "pending" %}
-            <button class="btn-ready" data-id="{{ order.id }}">✅ Ready</button>
-            <button class="btn-served" data-id="{{ order.id }}">🍽️ Served</button>
-            {% elif table_type == "ready" %}
-            <button class="btn-served" data-id="{{ order.id }}">🍽️ Served</button>
-            {% endif %}
+            <div class="action-cell">
+                {% if table_type == "pending" %}
+                    <button class="btn-action btn-mark-ready btn-ready" data-id="{{ order.id }}">✅ Ready</button>
+                    <button class="btn-action btn-mark-served btn-served" data-id="{{ order.id }}">🍽️ Served</button>
+                {% elif table_type == "ready" %}
+                    <button class="btn-action btn-mark-served btn-served" data-id="{{ order.id }}">🍽️ Served</button>
+                {% endif %}
 
-            <div class="dropdown">
-                <button class="menu-button">⋯</button>
-                <div class="dropdown-content">
-                    <button class="btn-delete" data-id="{{ order.id }}">🗑️ Delete</button>
-                    {% if table_type == "ready" %}
-                    <button class="btn-move-to-pending" data-id="{{ order.id }}">↩️ Back to Pending</button>
-                    {% elif table_type == "served" %}
-                    <button class="btn-move-to-ready" data-id="{{ order.id }}">↩️ Back to Ready</button>
-                    <button class="btn-move-to-pending" data-id="{{ order.id }}">↩️ Back to Pending</button>
-                    {% endif %}
+                <div class="dropdown">
+                    <button class="btn-more">⋯</button>
+                    <div class="dropdown-menu">
+                        <button class="btn-danger btn-delete" data-id="{{ order.id }}">🗑️ Delete</button>
+                        {% if table_type == "ready" %}
+                        <button class="btn-move-to-pending" data-id="{{ order.id }}">↩️ Back to Pending</button>
+                        {% elif table_type == "served" %}
+                        <button class="btn-move-to-ready" data-id="{{ order.id }}">↩️ Back to Ready</button>
+                        <button class="btn-move-to-pending" data-id="{{ order.id }}">↩️ Back to Pending</button>
+                        {% endif %}
+                    </div>
                 </div>
+            </div>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5">
+            <div class="empty-state">
+                <span class="empty-icon">
+                    {% if table_type == "pending" %}⏳
+                    {% elif table_type == "ready" %}✅
+                    {% elif table_type == "served" %}🍽️
+                    {% endif %}
+                </span>
+                <p>
+                    {% if table_type == "pending" %}No Pending Orders
+                    {% elif table_type == "ready" %}No Ready Orders
+                    {% elif table_type == "served" %}No Served Orders
+                    {% endif %}
+                </p>
             </div>
         </td>
     </tr>
     {% endfor %}
 </tbody>
-

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Order
+from .models import Order, PaymentMethod
 from customers.models import Customer
 
 
@@ -8,6 +8,11 @@ class OrderForm(forms.ModelForm):
         queryset=Customer.objects.all(),
         required=False,
         label="Select Member (optional)"
+    )
+    payment_method = forms.ModelChoiceField(
+        queryset=PaymentMethod.objects.filter(is_active=True),
+        required=True,
+        label="Payment Method",
     )
 
     class Meta:

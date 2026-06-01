@@ -214,6 +214,20 @@ def create_order(request):
                 order.customer = None
                 order.name = new_name or 'Guest'
 
+            # Guard: a Shooties Passport order may contain exactly 1 cup.
+            pm_name_check = (order.payment_method.name if order.payment_method else '').strip().lower()
+            cups_check = sum(
+                int(request.POST.get(f'smoothie_{s.id}', 0) or 0) for s in smoothies
+            )
+            if pm_name_check == 'shooties passport' and cups_check != 1:
+                return render(request, 'sales/create_order.html', {
+                    'form': form,
+                    'smoothies': smoothies,
+                    'customers': Customer.objects.all(),
+                    'role': request.user.role,
+                    'error': 'A Shooties Passport order must contain exactly 1 cup.',
+                })
+
             jakarta_tz = pytz.timezone("Asia/Jakarta")
             order.created_at = timezone.now().astimezone(jakarta_tz)
             order.store = request.user.store
@@ -245,6 +259,31 @@ def create_order(request):
                             quantity=-total_deduction,
                             reason='sale_deduct'
                         )
+
+            # ── Shooties Passport handling ──────────────────────────────
+            pm_name = (order.payment_method.name if order.payment_method else '')
+            is_passport_payment = pm_name.strip().lower() == 'shooties passport'
+
+            total_cups = sum(
+                int(request.POST.get(f'smoothie_{s.id}', 0) or 0) for s in smoothies
+            )
+
+            if is_passport_payment:
+                # The redeemed free cup earns no stamp, but its nominal price is
+                # still recorded as revenue (the free cup is booked as promotion cost).
+                claim_uuid = request.POST.get('passport_claim_uuid', '').strip()
+                if claim_uuid and selected_customer:
+                    from customers.models import Passport
+                    passport = Passport.objects.filter(
+                        claim_uuid=claim_uuid,
+                        customer=selected_customer,
+                        free_claimed=False,
+                    ).first()
+                    if passport and passport.can_claim:
+                        passport.redeem(order)
+            elif selected_customer and total_cups > 0:
+                # Paid cups (QRIS / Cash) earn one stamp each.
+                selected_customer.add_stamps(total_cups)
 
             order.total_price = total_price
             order.save()
