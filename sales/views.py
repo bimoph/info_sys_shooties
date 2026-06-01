@@ -267,7 +267,7 @@ def create_order(request):
                 addon_ids = entry.get('addon_ids', [])
                 for addon_id in addon_ids:
                     try:
-                        addon = AddOn.objects.get(pk=int(addon_id), menu=smoothie, is_active=True)
+                        addon = AddOn.objects.get(pk=int(addon_id), menus=smoothie, is_active=True)
                         OrderItemAddOn.objects.create(order_item=order_item, addon=addon)
                         total_price += qty * float(addon.price)
                     except (AddOn.DoesNotExist, TypeError, ValueError):

@@ -42,7 +42,8 @@ class SmoothieMenu(models.Model):
         return self.addons.filter(is_active=True)
 
 class AddOn(models.Model):
-    menu = models.ForeignKey(SmoothieMenu, on_delete=models.CASCADE, related_name='addons')
+    # An add-on (e.g. "Protein", "Extra shot") can be offered on many menus.
+    menus = models.ManyToManyField(SmoothieMenu, related_name='addons', blank=True)
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     is_active = models.BooleanField(default=True)
