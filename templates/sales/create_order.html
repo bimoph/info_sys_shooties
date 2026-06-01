@@ -4,35 +4,48 @@
 
 {% block extra_css %}
 <style>
-/* Page layout (same style as before) */
-.create-order-page { max-width: 920px; margin: 24px auto; padding: 0 16px; }
+.create-order-page { max-width: 960px; margin: 24px auto; padding: 0 16px; }
 .header-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 18px; }
 .header-row h1 { margin:0; font-size:22px; color:#222; }
-.btn { display:inline-block; padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer; text-decoration:none; border: none; }
+.btn { display:inline-block; padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer; text-decoration:none; border:none; }
 .btn-ghost { background:transparent; color:#007bff; border:1px solid transparent; }
 .btn-primary { background:#28a745; color:white; }
 .btn-secondary { background:#007bff; color:white; }
+.btn-sm { padding:4px 10px; font-size:13px; }
 .modal { display:none; position:fixed; left:50%; top:10%; transform:translateX(-50%); width:min(680px,94%); background:#fff; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.12); z-index:1100; padding:18px; }
 .modal h3 { margin-top:0; }
 .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:1050; }
-.form-card { background:#fff; border-radius:10px; padding:18px; box-shadow:0 4px 14px rgba(0,0,0,0.06); display:grid; grid-template-columns: 1fr 320px; gap:18px; }
-@media (max-width: 900px) { .form-card { grid-template-columns:1fr; } }
-.menu-list { max-height:60vh; overflow:auto; padding-right:4px; }
-.menu-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px; background:#fbfbfb; border:1px solid #eee; border-radius:8px; margin-bottom:10px; }
-.menu-info { display:flex; gap:12px; align-items:center; }
+.form-card { background:#fff; border-radius:10px; padding:18px; box-shadow:0 4px 14px rgba(0,0,0,0.06); display:grid; grid-template-columns: 1fr 340px; gap:18px; }
+@media (max-width:900px) { .form-card { grid-template-columns:1fr; } }
+
+/* Menu list — button style */
+.menu-list { max-height:58vh; overflow:auto; padding-right:4px; }
+.menu-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; background:#fbfbfb; border:1px solid #eee; border-radius:8px; margin-bottom:8px; cursor:default; }
+.menu-item:hover { background:#f0f6ff; border-color:#c7dcff; }
+.menu-info { display:flex; flex-direction:column; gap:2px; }
 .menu-name { font-weight:600; color:#222; }
 .menu-price { color:#666; font-size:13px; }
-.quantity-control { display:flex; align-items:center; gap:8px; }
-.quantity-control button { width:34px; height:34px; border-radius:8px; border:none; background:#007bff; color:white; font-size:18px; cursor:pointer; }
-.quantity-control input { width:64px; height:34px; text-align:center; font-weight:600; border:1px solid #ddd; border-radius:6px; }
-.sidebar { background:#fafafa; border-radius:8px; padding:14px; border:1px solid #eee; height:100%; display:flex; flex-direction:column; gap:12px; }
+.addon-hint { font-size:11px; color:#007bff; }
+
+/* Sidebar / cart */
+.sidebar { background:#fafafa; border-radius:8px; padding:14px; border:1px solid #eee; display:flex; flex-direction:column; gap:10px; min-height:520px; }
 .customer-card { background:#fff; border:1px solid #e6f0ff; padding:8px 10px; border-radius:8px; }
 .customer-card .name { font-weight:700; }
 .small { font-size:13px; color:#666; }
-.cart-list { display:flex; flex-direction:column; gap:8px; max-height:36vh; overflow:auto; padding-right:6px; }
-.cart-item { display:flex; justify-content:space-between; gap:8px; padding:8px; background:white; border-radius:6px; border:1px solid #eee; }
-.cart-item .left { display:flex; flex-direction:column; }
-.cart-item .qty { font-weight:700; color:#333; }
+.cart-list { display:flex; flex-direction:column; gap:8px; max-height:38vh; overflow:auto; padding-right:4px; }
+.cart-entry { background:white; border:1px solid #eee; border-radius:8px; padding:8px 10px; }
+.cart-entry-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.cart-entry-name { font-weight:600; color:#222; font-size:14px; }
+.cart-entry-addon { font-size:12px; color:#007bff; margin-top:2px; }
+.cart-entry-bottom { display:flex; align-items:center; justify-content:space-between; margin-top:6px; }
+.cart-entry-price { font-size:13px; color:#555; }
+.cart-qty-ctrl { display:flex; align-items:center; gap:6px; }
+.cart-qty-ctrl button { width:28px; height:28px; border-radius:6px; border:none; background:#007bff; color:white; font-size:16px; cursor:pointer; line-height:1; }
+.cart-qty-ctrl span { font-weight:700; min-width:20px; text-align:center; }
+.modal-qty-ctrl { display:flex; align-items:center; gap:8px; }
+.modal-qty-ctrl button { width:34px; height:34px; border-radius:8px; border:none; background:#007bff; color:white; font-size:18px; cursor:pointer; line-height:1; }
+.modal-qty-ctrl input { width:60px; height:34px; text-align:center; font-weight:700; border:1px solid #ddd; border-radius:6px; }
+.btn-remove { background:none; border:none; color:#dc3545; font-size:18px; cursor:pointer; line-height:1; padding:0 4px; }
 .totals { margin-top:auto; }
 .total-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-weight:700; font-size:18px; }
 label { display:block; font-weight:600; margin-bottom:6px; color:#333; }
@@ -40,10 +53,9 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
 .empty { color:#777; text-align:center; padding:10px; }
 .muted { color:#777; font-size:13px; }
-.badge { background:#007bff; color:white; padding:2px 8px; border-radius:999px; font-size:12px; }
-
-/* small inline feedback */
 .feedback { font-size:13px; color:#b02a37; margin-top:6px; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+.shake { animation: shake .35s ease; }
 
 /* QR Scanner */
 .btn-scan {
@@ -121,69 +133,66 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
           <div class="name" id="selectedCustomerName"></div>
           <div class="small" id="selectedCustomerPhone"></div>
         </div>
-        <div>
-          <button type="button" class="btn btn-ghost" id="cancelCustomerBtn">Cancel Member</button>
-        </div>
+        <button type="button" class="btn btn-ghost" id="cancelCustomerBtn">Cancel Member</button>
       </div>
     </div>
   </div>
 
   <form method="post" class="form-card" id="orderForm" novalidate>
     {% csrf_token %}
-    <!-- LEFT: menu list -->
+    <!-- Hidden cart JSON submitted to server -->
+    <input type="hidden" name="cart_json" id="cart_json" value="[]">
+    <input type="hidden" name="total_price" id="total_price_hidden" value="0">
+    <input type="hidden" name="selected_customer_id" id="selected_customer_id" value="">
+    <input type="hidden" name="new_phone" id="new_phone" value="">
+
+    <!-- LEFT: customer info + menu buttons -->
     <div>
       <label for="id_name">Customer Name:</label>
-      <!-- <input required type="text" name="name" id="id_name" placeholder="Customer or guest name"> -->
       <input required type="text" name="name" id="id_name" placeholder="Customer or guest name"
-       oninvalid="this.setCustomValidity('Customer name is required')"
-       oninput="this.setCustomValidity('')">
-
+        oninvalid="this.setCustomValidity('Customer name is required')"
+        oninput="this.setCustomValidity('')">
 
       <label for="phone_display" style="margin-top:8px;">Phone (Member Only):</label>
       <input type="tel" id="phone_display" name="phone_display" readonly placeholder="Select or create member to autofill">
 
-      <!-- Hidden fields -->
-      <input type="hidden" name="selected_customer_id" id="selected_customer_id" value="">
-      <input type="hidden" name="new_phone" id="new_phone" value="">
       <input type="hidden" name="passport_claim_uuid" id="passport_claim_uuid" value="">
-      <input type="hidden" name="total_price" id="total_price_hidden" value="0">
 
-      <hr style="margin:12px 0; border-color:#f0f0f0;">
+      <hr style="margin:14px 0; border-color:#f0f0f0;">
 
-      <label>Smoothie Menu (select qty)</label>
+      <label>Smoothie Menu — tap to add</label>
       <div class="menu-list" id="menuList">
         {% for smoothie in smoothies %}
-          <div class="menu-item" data-id="{{ smoothie.id }}" data-price="{{ smoothie.price }}">
+          <div class="menu-item"
+               data-id="{{ smoothie.id }}"
+               data-name="{{ smoothie.name|escapejs }}"
+               data-price="{{ smoothie.price|floatformat:0 }}"
+               data-has-addons="{% if smoothie.get_active_addons %}true{% else %}false{% endif %}">
             <div class="menu-info">
               <div class="menu-name">{{ smoothie.name }}</div>
-              <div class="menu-price">{{ smoothie.price|rupiah }}</div>
+              <div class="menu-price">{{ smoothie.price|rupiah }}{% if smoothie.get_active_addons %} <span class="addon-hint">+ add-ons available</span>{% endif %}</div>
             </div>
-            <div class="quantity-control" aria-label="Quantity control for {{ smoothie.name }}">
-              <button type="button" class="decrease-btn" aria-label="Decrease">−</button>
-              <input type="number" name="smoothie_{{ smoothie.id }}" min="0" value="0" class="smoothie-qty" aria-label="Quantity for {{ smoothie.name }}">
-              <button type="button" class="increase-btn" aria-label="Increase">+</button>
-            </div>
+            <button type="button" class="btn btn-secondary btn-sm add-item-btn">Add</button>
           </div>
         {% endfor %}
       </div>
     </div>
 
-    <!-- RIGHT: sidebar - cart + payment -->
+    <!-- RIGHT: cart + payment -->
     <aside class="sidebar" aria-live="polite">
-      <div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div><strong>Cart</strong></div>
-          <div class="muted">Items: <span id="cartCount">0</span></div>
-        </div>
-        <div class="cart-list" id="cartList">
-          <div class="empty" id="cartEmpty">No items selected</div>
-        </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>Cart</strong>
+        <span class="muted">Items: <span id="cartCount">0</span></span>
+      </div>
+
+      <div class="cart-list" id="cartList">
+        <div class="empty" id="cartEmpty">No items yet — tap Add</div>
       </div>
 
       <div class="totals">
         <div class="total-row">
-          <div class="muted">Total</div>
-          <div id="total_price_display">Rp 0</div>
+          <span class="muted">Total</span>
+          <span id="total_price_display">Rp 0</span>
         </div>
 
         <div style="margin-top:10px;">
@@ -200,10 +209,35 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
   </form>
 </div>
 
+<!-- Add-on modal -->
+<div id="addonModal" class="modal" role="dialog" aria-modal="true" style="max-width:420px;">
+  <h3 style="margin:0 0 4px 0;">Add-ons for <span id="addonModalMenuName" style="color:#007bff;"></span></h3>
+  <p class="muted" style="margin:0 0 14px 0;">Optional — select any add-ons</p>
+  <div id="addonCheckboxList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#f7f9fc;border:1px solid #e6ebf2;border-radius:8px;margin-bottom:14px;">
+    <span style="font-weight:600;">Quantity</span>
+    <div class="modal-qty-ctrl">
+      <button type="button" id="addonQtyDec">−</button>
+      <input type="number" id="addonQtyInput" min="1" value="1" inputmode="numeric">
+      <button type="button" id="addonQtyInc">+</button>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <span class="muted">Line subtotal</span>
+    <strong id="addonSubtotal" style="font-size:16px;">Rp 0</strong>
+  </div>
+
+  <div style="display:flex;gap:8px;">
+    <button type="button" class="btn btn-primary" id="confirmAddonBtn">Add to Cart</button>
+    <button type="button" class="btn btn-ghost" id="skipAddonBtn">Skip Add-ons</button>
+  </div>
+</div>
+
 <!-- Customer modal -->
 <div id="customerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle">
   <h3 id="customerModalTitle">Find existing member</h3>
-
   <!-- QR Scan button -->
   <button type="button" class="btn-scan" id="startScanBtn">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -233,31 +267,25 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
     <input id="customerSearch" type="text" placeholder="Search by name or phone..." style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd;">
     <button type="button" class="btn btn-secondary" id="modalCreateBtn">Create</button>
   </div>
-
-  <ul id="customerResults" style="list-style:none; padding:0; margin:0; max-height:240px; overflow:auto; border-top:1px solid #f0f0f0;">
+  <ul id="customerResults" style="list-style:none;padding:0;margin:0;max-height:240px;overflow:auto;border-top:1px solid #f0f0f0;">
     {% for customer in customers %}
       <li class="customer-row" data-id="{{ customer.id }}" data-name="{{ customer.name }}" data-phone="{{ customer.phone }}"
-          style="padding:10px; border-bottom:1px solid #f6f6f6; cursor:pointer;">
-        <strong>{{ customer.name }}</strong> <div class="small" style="margin-top:4px;">{{ customer.phone }}</div>
+          style="padding:10px;border-bottom:1px solid #f6f6f6;cursor:pointer;">
+        <strong>{{ customer.name }}</strong>
+        <div class="small" style="margin-top:4px;">{{ customer.phone }}</div>
       </li>
     {% endfor %}
-    {% if customers|length == 0 %}
-      <li class="empty">No members yet</li>
-    {% endif %}
+    {% if not customers %}<li class="empty">No members yet</li>{% endif %}
   </ul>
-
-  <hr style="margin:12px 0; border-color:#f0f0f0;">
-
-  <div>
-    <h4 style="margin:0 0 8px 0;">Create quick member</h4>
-    <input id="newMemberName" type="text" placeholder="Name" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:8px;">
-    <input id="newMemberPhone" type="tel" placeholder="Phone" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:8px;">
-    <div style="display:flex; gap:8px; margin-top:6px;">
-      <button type="button" class="btn btn-primary" id="saveMemberBtn">Save & Use</button>
-      <button type="button" class="btn btn-ghost" id="closeModalBtn">Close</button>
-    </div>
-    <div id="modalFeedback" class="feedback" style="display:none;"></div>
+  <hr style="margin:12px 0;border-color:#f0f0f0;">
+  <h4 style="margin:0 0 8px 0;">Create quick member</h4>
+  <input id="newMemberName" type="text" placeholder="Name" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px;">
+  <input id="newMemberPhone" type="tel" placeholder="Phone" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;margin-bottom:8px;">
+  <div style="display:flex;gap:8px;margin-top:6px;">
+    <button type="button" class="btn btn-primary" id="saveMemberBtn">Save & Use</button>
+    <button type="button" class="btn btn-ghost" id="closeModalBtn">Close</button>
   </div>
+  <div id="modalFeedback" class="feedback" style="display:none;"></div>
 </div>
 
 <!-- Shooties Passport Scanner modal -->
@@ -291,124 +319,349 @@ input[type="text"], input[type="tel"], select { width:100%; padding:10px; border
 
 {% block extra_js %}
 <script>
-/* Helper to get CSRF from cookie */
+/* Add-on data injected from server */
+const SMOOTHIE_ADDONS = {
+  {% for smoothie in smoothies %}
+  "{{ smoothie.id }}": [{% for addon in smoothie.get_active_addons %}{"id":{{ addon.id }},"name":"{{ addon.name|escapejs }}","price":{{ addon.price|floatformat:0 }}},{% endfor %}],
+  {% endfor %}
+};
+</script>
+<script>
 function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let c of cookies) {
-            const cookie = c.trim();
-            if (cookie.startsWith(name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+  let v = null;
+  if (document.cookie) {
+    for (let c of document.cookie.split(';')) {
+      c = c.trim();
+      if (c.startsWith(name + '=')) { v = decodeURIComponent(c.slice(name.length + 1)); break; }
     }
-    return cookieValue;
+  }
+  return v;
 }
 const csrftoken = getCookie('csrftoken');
 
 (function () {
-  // Utility
-  function formatRupiah(number){
-    if (!number) return 'Rp 0';
-    return 'Rp ' + String(number).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  'use strict';
+
+  /* ── Utilities ── */
+  function formatRupiah(n) {
+    if (!n) return 'Rp 0';
+    return 'Rp ' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  let _uid = 0;
+  function uid() { return ++_uid; }
+
+  /* ── Cart state ── */
+  // Each entry: { uid, smoothieId, name, basePrice, addons:[{id,name,price}], qty }
+  let cart = [];
+
+  /* ── DOM refs ── */
+  const menuList        = document.getElementById('menuList');
+  const cartList        = document.getElementById('cartList');
+  const cartEmpty       = document.getElementById('cartEmpty');
+  const cartCount       = document.getElementById('cartCount');
+  const totalDisplay    = document.getElementById('total_price_display');
+  const totalHidden     = document.getElementById('total_price_hidden');
+  const cartJson        = document.getElementById('cart_json');
+  const submitBtn       = document.getElementById('submitBtn');
+  const nameField       = document.getElementById('id_name');
+  const paymentField    = document.getElementById('id_payment_method');
+  const form            = document.getElementById('orderForm');
+
+  /* ── Add-on modal ── */
+  const addonModal       = document.getElementById('addonModal');
+  const addonModalName   = document.getElementById('addonModalMenuName');
+  const addonCheckboxList= document.getElementById('addonCheckboxList');
+  const confirmAddonBtn  = document.getElementById('confirmAddonBtn');
+  const skipAddonBtn     = document.getElementById('skipAddonBtn');
+  const addonQtyInput    = document.getElementById('addonQtyInput');
+  const addonQtyInc      = document.getElementById('addonQtyInc');
+  const addonQtyDec      = document.getElementById('addonQtyDec');
+  const addonSubtotal    = document.getElementById('addonSubtotal');
+  const modalBackdrop    = document.getElementById('modalBackdrop');
+
+  // pending: info about item being added while modal is open
+  let pendingItem = null; // { smoothieId, name, basePrice }
+
+  function getModalQty() {
+    let q = parseInt(addonQtyInput.value) || 1;
+    if (q < 1) q = 1;
+    return q;
   }
 
-  // DOM elements
-  const menuList = document.getElementById('menuList');
-  const qtyInputs = () => Array.from(document.querySelectorAll('.smoothie-qty'));
-  const cartList = document.getElementById('cartList');
-  const cartCount = document.getElementById('cartCount');
-  const totalDisplay = document.getElementById('total_price_display');
-  const totalHidden = document.getElementById('total_price_hidden');
-  const submitBtn = document.getElementById('submitBtn');
-  const cartEmpty = document.getElementById('cartEmpty');
+  function getCheckedAddons() {
+    if (!pendingItem) return [];
+    const checks = addonCheckboxList.querySelectorAll('input[type=checkbox]:checked');
+    return Array.from(checks).map(c => {
+      const id = parseInt(c.value);
+      return (SMOOTHIE_ADDONS[pendingItem.smoothieId] || []).find(a => a.id === id);
+    }).filter(Boolean);
+  }
 
-  // Customer modal elements
-  const openCustomerBtn = document.getElementById('openCustomerBtn');
-  const customerModal = document.getElementById('customerModal');
-  const modalBackdrop = document.getElementById('modalBackdrop');
-  const customerRows = Array.from(document.querySelectorAll('.customer-row'));
-  const customerSearch = document.getElementById('customerSearch');
-  const selectedCustomerWrap = document.getElementById('selectedCustomerWrap');
-  const selectedCustomerName = document.getElementById('selectedCustomerName');
-  const selectedCustomerPhone = document.getElementById('selectedCustomerPhone');
-  const selectedCustomerIdHidden = document.getElementById('selected_customer_id');
-  const phoneDisplay = document.getElementById('phone_display');
-  const saveMemberBtn = document.getElementById('saveMemberBtn');
-  const newMemberName = document.getElementById('newMemberName');
-  const newMemberPhone = document.getElementById('newMemberPhone');
-  const modalCreateBtn = document.getElementById('modalCreateBtn');
-  const cancelCustomerBtn = document.getElementById('cancelCustomerBtn');
-  const modalFeedback = document.getElementById('modalFeedback');
+  function updateModalSubtotal() {
+    if (!pendingItem) return;
+    const addonSum = getCheckedAddons().reduce((s, a) => s + parseInt(a.price), 0);
+    const qty = getModalQty();
+    addonSubtotal.textContent = formatRupiah((pendingItem.basePrice + addonSum) * qty);
+  }
 
-  // init
-  updateCartUI();
-  window._recalcCart = updateCartUI;
-
-  // Event: increase/decrease buttons (delegated)
-  menuList.addEventListener('click', (e) => {
-    if (e.target.closest('.increase-btn') || e.target.closest('.decrease-btn')) {
-      const inc = !!e.target.closest('.increase-btn');
-      const menuItem = e.target.closest('.menu-item');
-      if (!menuItem) return;
-      const input = menuItem.querySelector('.smoothie-qty');
-      const old = parseInt(input.value) || 0;
-      input.value = inc ? old + 1 : Math.max(0, old - 1);
-      updateCartUI();
-    }
-  });
-
-  // Manual input change
-  menuList.addEventListener('input', (e) => {
-    if (e.target.matches('.smoothie-qty')) {
-      if (e.target.value === '') e.target.value = 0;
-      if (parseInt(e.target.value) < 0) e.target.value = 0;
-      updateCartUI();
-    }
-  });
-
-  // update cart UI
-  function updateCartUI(){
-    const inputs = qtyInputs();
-    let total = 0;
-    const items = [];
-    inputs.forEach(input => {
-      const qty = parseInt(input.value) || 0;
-      if (qty <= 0) return;
-      const itemNode = input.closest('.menu-item');
-      const id = itemNode.dataset.id;
-      const name = itemNode.querySelector('.menu-name').textContent.trim();
-      const price = parseInt(itemNode.dataset.price) || 0;
-      total += price * qty;
-      items.push({ id, name, qty, price });
+  function openAddonModal(smoothieId, name, basePrice) {
+    pendingItem = { smoothieId, name, basePrice };
+    addonModalName.textContent = name;
+    addonCheckboxList.innerHTML = '';
+    (SMOOTHIE_ADDONS[smoothieId] || []).forEach(addon => {
+      const lbl = document.createElement('label');
+      lbl.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px;border:1px solid #eee;border-radius:8px;cursor:pointer;';
+      lbl.innerHTML = `<input type="checkbox" value="${addon.id}" style="width:18px;height:18px;cursor:pointer;">
+        <span style="flex:1;font-weight:600;">${addon.name}</span>
+        <span style="color:#007bff;font-weight:600;">+${formatRupiah(addon.price)}</span>`;
+      addonCheckboxList.appendChild(lbl);
     });
+    addonQtyInput.value = 1;
+    updateModalSubtotal();
+    addonModal.style.display = 'block';
+    modalBackdrop.style.display = 'block';
+  }
 
+  function closeAddonModal() {
+    addonModal.style.display = 'none';
+    if (customerModal.style.display !== 'block') modalBackdrop.style.display = 'none';
+    pendingItem = null;
+  }
+
+  // Modal quantity controls
+  addonQtyInc.addEventListener('click', () => {
+    addonQtyInput.value = getModalQty() + 1;
+    updateModalSubtotal();
+  });
+  addonQtyDec.addEventListener('click', () => {
+    addonQtyInput.value = Math.max(1, getModalQty() - 1);
+    updateModalSubtotal();
+  });
+  addonQtyInput.addEventListener('input', () => {
+    if (addonQtyInput.value !== '' && parseInt(addonQtyInput.value) < 1) addonQtyInput.value = 1;
+    updateModalSubtotal();
+  });
+  // Recompute subtotal whenever an add-on checkbox changes
+  addonCheckboxList.addEventListener('change', updateModalSubtotal);
+
+  function addToCart(smoothieId, name, basePrice, addons, qty) {
+    qty = Math.max(1, parseInt(qty) || 1);
+
+    // Shooties Passport orders may contain exactly 1 cup — a new selection
+    // replaces whatever was in the cart.
+    if (window.__passportMode) {
+      cart = [{ uid: uid(), smoothieId, name, basePrice, addons, qty: 1 }];
+      renderCart();
+      return;
+    }
+
+    // Look for an existing entry with same smoothie + same addon set to merge qty
+    const addonKey = addons.map(a => a.id).sort().join(',');
+    const existing = cart.find(e =>
+      e.smoothieId === smoothieId &&
+      e.addons.map(a => a.id).sort().join(',') === addonKey
+    );
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      cart.push({ uid: uid(), smoothieId, name, basePrice, addons, qty });
+    }
+    renderCart();
+  }
+
+  confirmAddonBtn.addEventListener('click', () => {
+    if (!pendingItem) return;
+    const addons = getCheckedAddons();
+    const qty = getModalQty();
+    const { smoothieId, name, basePrice } = pendingItem;
+    closeAddonModal();
+    addToCart(smoothieId, name, basePrice, addons, qty);
+  });
+
+  skipAddonBtn.addEventListener('click', () => {
+    if (!pendingItem) return;
+    const qty = getModalQty();
+    const { smoothieId, name, basePrice } = pendingItem;
+    closeAddonModal();
+    addToCart(smoothieId, name, basePrice, [], qty);
+  });
+
+  /* ── Menu list: Add button clicks ── */
+  menuList.addEventListener('click', e => {
+    const btn = e.target.closest('.add-item-btn');
+    if (!btn) return;
+    const item = btn.closest('.menu-item');
+    const smoothieId = item.dataset.id;
+    const name       = item.dataset.name;
+    const basePrice  = parseInt(item.dataset.price) || 0;
+    const hasAddons  = item.dataset.hasAddons === 'true';
+
+    if (hasAddons && (SMOOTHIE_ADDONS[smoothieId] || []).length > 0) {
+      openAddonModal(smoothieId, name, basePrice);
+    } else {
+      addToCart(smoothieId, name, basePrice, [], 1);
+    }
+  });
+
+  /* ── Cart rendering ── */
+  function renderCart() {
     cartList.innerHTML = '';
-    if (items.length === 0) {
+
+    if (cart.length === 0) {
       cartList.appendChild(cartEmpty);
       cartCount.textContent = 0;
-    } else {
-      if (cartEmpty.parentNode) cartEmpty.parentNode.removeChild(cartEmpty);
-      items.forEach(it => {
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        div.innerHTML = `<div class="left"><div>${it.name}</div><div class="small"> ${formatRupiah(it.price)}</div></div>
-                         <div class="right"><div class="qty">${it.qty} ×</div><div>${formatRupiah(it.price * it.qty)}</div></div>`;
-        cartList.appendChild(div);
-      });
-      cartCount.textContent = items.reduce((s,i) => s + i.qty, 0);
+      totalDisplay.textContent = 'Rp 0';
+      totalHidden.value = 0;
+      cartJson.value = '[]';
+      updateSubmitAvailability();
+      return;
     }
 
+    if (cartEmpty.parentNode) cartEmpty.parentNode.removeChild(cartEmpty);
+
+    let total = 0;
+    let totalQty = 0;
+
+    cart.forEach(entry => {
+      const addonSum = entry.addons.reduce((s, a) => s + parseInt(a.price), 0);
+      const unitPrice = entry.basePrice + addonSum;
+      const subtotal = unitPrice * entry.qty;
+      total += subtotal;
+      totalQty += entry.qty;
+
+      const addonLines = entry.addons.map(a =>
+        `<div class="cart-entry-addon">+ ${a.name} (+${formatRupiah(a.price)})</div>`
+      ).join('');
+
+      const div = document.createElement('div');
+      div.className = 'cart-entry';
+      div.dataset.uid = entry.uid;
+      div.innerHTML = `
+        <div class="cart-entry-top">
+          <div>
+            <div class="cart-entry-name">${entry.name}</div>
+            ${addonLines}
+          </div>
+          <button type="button" class="btn-remove" data-action="remove" title="Remove">✕</button>
+        </div>
+        <div class="cart-entry-bottom">
+          <div class="cart-entry-price">${formatRupiah(unitPrice)} each → <strong>${formatRupiah(subtotal)}</strong></div>
+          <div class="cart-qty-ctrl">
+            <button type="button" data-action="dec">−</button>
+            <span>${entry.qty}</span>
+            <button type="button" data-action="inc">+</button>
+          </div>
+        </div>`;
+      cartList.appendChild(div);
+    });
+
+    cartCount.textContent = totalQty;
     totalDisplay.textContent = formatRupiah(total);
     totalHidden.value = total;
-    submitBtn.disabled = total === 0;
-    submitBtn.style.opacity = total === 0 ? 0.6 : 1;
+
+    // Serialise cart for form submission
+    cartJson.value = JSON.stringify(cart.map(e => ({
+      smoothie_id: e.smoothieId,
+      qty: e.qty,
+      addon_ids: e.addons.map(a => a.id),
+    })));
+
+    updateSubmitAvailability();
   }
 
-  // Modal open/close
-  function openModal(){
+  /* ── Cart entry controls (delegated) ── */
+  cartList.addEventListener('click', e => {
+    const action = e.target.dataset.action;
+    if (!action) return;
+    const entryEl = e.target.closest('.cart-entry');
+    if (!entryEl) return;
+    const entryUid = parseInt(entryEl.dataset.uid);
+    const idx = cart.findIndex(e => e.uid === entryUid);
+    if (idx === -1) return;
+
+    if (action === 'inc') {
+      // Passport orders are capped at a single cup.
+      if (window.__passportMode) return;
+      cart[idx].qty += 1;
+    } else if (action === 'dec') {
+      cart[idx].qty -= 1;
+      if (cart[idx].qty <= 0) cart.splice(idx, 1);
+    } else if (action === 'remove') {
+      cart.splice(idx, 1);
+    }
+    renderCart();
+  });
+
+  /* ── Submit availability ── */
+  function updateSubmitAvailability() {
+    const total = parseInt(totalHidden.value || '0', 10);
+    const nameOk    = nameField    ? nameField.value.trim() !== '' : true;
+    const paymentOk = paymentField ? paymentField.value !== ''     : true;
+    const ready = nameOk && paymentOk && total > 0;
+    submitBtn.disabled = !ready;
+    submitBtn.style.opacity = ready ? '1' : '0.6';
+  }
+  if (nameField)    nameField.addEventListener('input',  updateSubmitAvailability);
+  if (paymentField) paymentField.addEventListener('change', updateSubmitAvailability);
+  updateSubmitAvailability();
+
+  /* ── Form submit: validate then let it go ── */
+  function triggerShake(el) {
+    if (!el) return;
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+    el.addEventListener('animationend', () => el.classList.remove('shake'), { once: true });
+  }
+
+  form.addEventListener('submit', ev => {
+    const total    = parseInt(totalHidden.value || '0', 10);
+    const nameVal  = nameField    ? nameField.value.trim() : '';
+    const payVal   = paymentField ? paymentField.value     : '';
+
+    if (!nameVal) {
+      ev.preventDefault(); triggerShake(submitBtn);
+      setTimeout(() => { nameField && nameField.focus(); }, 150);
+      return;
+    }
+    if (!payVal) {
+      ev.preventDefault(); triggerShake(submitBtn);
+      setTimeout(() => alert('Please select a payment method.'), 220);
+      return;
+    }
+    if (total <= 0) {
+      ev.preventDefault(); triggerShake(submitBtn);
+      setTimeout(() => alert('Please add at least one item to the cart.'), 220);
+      return;
+    }
+    // valid — allow submit
+  });
+
+  /* ── Escape key ── */
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (addonModal.style.display === 'block') closeAddonModal();
+    else closeCustomerModal();
+  });
+
+  /* ── Customer modal ── */
+  const customerModal    = document.getElementById('customerModal');
+  const openCustomerBtn  = document.getElementById('openCustomerBtn');
+  const customerRows     = Array.from(document.querySelectorAll('.customer-row'));
+  const customerSearch   = document.getElementById('customerSearch');
+  const selectedCustomerWrap  = document.getElementById('selectedCustomerWrap');
+  const selectedCustomerName  = document.getElementById('selectedCustomerName');
+  const selectedCustomerPhone = document.getElementById('selectedCustomerPhone');
+  const selectedCustomerIdHidden = document.getElementById('selected_customer_id');
+  const phoneDisplay     = document.getElementById('phone_display');
+  const saveMemberBtn    = document.getElementById('saveMemberBtn');
+  const newMemberName    = document.getElementById('newMemberName');
+  const newMemberPhone   = document.getElementById('newMemberPhone');
+  const modalCreateBtn   = document.getElementById('modalCreateBtn');
+  const cancelCustomerBtn= document.getElementById('cancelCustomerBtn');
+  const modalFeedback    = document.getElementById('modalFeedback');
+
+  function openCustomerModal() {
     customerModal.style.display = 'block';
     modalBackdrop.style.display = 'block';
     customerSearch.value = '';
@@ -416,272 +669,117 @@ const csrftoken = getCookie('csrftoken');
     modalFeedback.style.display = 'none';
     customerSearch.focus();
   }
-  function closeModal(){
+  function closeCustomerModal() {
     customerModal.style.display = 'none';
     modalBackdrop.style.display = 'none';
     modalFeedback.style.display = 'none';
   }
 
-  openCustomerBtn.addEventListener('click', openModal);
-  document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
-  modalBackdrop.addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  openCustomerBtn.addEventListener('click', openCustomerModal);
+  document.getElementById('closeModalBtn')?.addEventListener('click', closeCustomerModal);
+  modalBackdrop.addEventListener('click', () => {
+    if (addonModal.style.display === 'block') { /* don't close customer modal via backdrop while addon modal is open */ return; }
+    closeCustomerModal();
+  });
 
-  // Filter customers (local list)
-  function filterCustomerRows(q){
-    q = (q||'').trim().toLowerCase();
+  function filterCustomerRows(q) {
+    q = (q || '').trim().toLowerCase();
     customerRows.forEach(r => {
-      const name = r.dataset.name.toLowerCase();
-      const phone = r.dataset.phone.toLowerCase();
-      const match = name.includes(q) || phone.includes(q);
+      const match = r.dataset.name.toLowerCase().includes(q) || r.dataset.phone.toLowerCase().includes(q);
       r.style.display = match ? 'block' : 'none';
     });
   }
-  customerSearch.addEventListener('input', (e) => filterCustomerRows(e.target.value));
+  customerSearch.addEventListener('input', e => filterCustomerRows(e.target.value));
 
-  // clicking a customer row selects it
   customerRows.forEach(r => {
     r.addEventListener('click', () => {
-      const id = r.dataset.id;
-      const name = r.dataset.name;
-      const phone = r.dataset.phone;
-      useCustomer(id, name, phone);
-      closeModal();
+      useCustomer(r.dataset.id, r.dataset.name, r.dataset.phone);
+      closeCustomerModal();
     });
   });
 
-  // AJAX helper: check phone existence
-  async function checkPhoneServer(phone){
-    if (!phone) return {exists:false};
+  async function checkPhoneServer(phone) {
+    if (!phone) return { exists: false };
     const url = `{% url 'customers_check_phone' %}?phone=${encodeURIComponent(phone)}`;
+    try { return await (await fetch(url, { credentials: 'same-origin' })).json(); }
+    catch { return { exists: false }; }
+  }
+  async function createCustomerServer(name, phone) {
+    const fd = new FormData();
+    fd.append('name', name); fd.append('phone', phone);
     try {
-      const res = await fetch(url, { credentials: 'same-origin' });
-      if (!res.ok) return {exists:false};
-      return await res.json();
-    } catch (err) {
-      console.error('checkPhone error', err);
-      return {exists:false};
-    }
+      return await (await fetch(`{% url 'customers_create_ajax' %}`, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'X-CSRFToken': csrftoken }, body: fd
+      })).json();
+    } catch { return { success: false, error: 'Network error' }; }
   }
 
-  // AJAX helper: create customer server-side
-  async function createCustomerServer(name, phone){
-    const url = `{% url 'customers_create_ajax' %}`;
-    const form = new FormData();
-    form.append('name', name);
-    form.append('phone', phone);
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'X-CSRFToken': csrftoken },
-        body: form
-      });
-      return await res.json();
-    } catch (err) {
-      console.error('createCustomer error', err);
-      return { success:false, error: 'Network error' };
-    }
-  }
-
-  // Save & Use button in modal: check phone first, then use existing or create
   saveMemberBtn.addEventListener('click', async () => {
     modalFeedback.style.display = 'none';
-    const name = newMemberName.value.trim();
+    const name  = newMemberName.value.trim();
     const phone = newMemberPhone.value.trim();
     if (!name || !phone) {
       modalFeedback.textContent = 'Please fill name and phone.';
-      modalFeedback.style.display = 'block';
+      modalFeedback.style.display = 'block'; return;
+    }
+    modalFeedback.textContent = 'Checking phone…'; modalFeedback.style.display = 'block';
+    const chk = await checkPhoneServer(phone);
+    if (chk?.exists) {
+      if (confirm(`Phone ${phone} is already used by "${chk.name}".\nUse existing member?`)) {
+        useCustomer(chk.id, chk.name, chk.phone); closeCustomerModal();
+      } else {
+        modalFeedback.textContent = 'Please change phone or use the existing member.';
+      }
       return;
     }
-
-    // Check server if phone exists
-    modalFeedback.textContent = 'Checking phone…';
-    modalFeedback.style.display = 'block';
-    const chk = await checkPhoneServer(phone);
-    if (chk && chk.exists) {
-      // already exists — prompt to use existing
-      const use = confirm(`Phone ${phone} is already used by "${chk.name}".\nUse existing member? (OK = use existing, Cancel = abort)`);
-      if (use) {
-        useCustomer(chk.id, chk.name, chk.phone);
-        closeModal();
-        return;
-      } else {
-        // user cancelled: don't create duplicate; allow them to change phone or cancel
-        modalFeedback.textContent = 'Please change phone or use the existing member.';
-        return;
-      }
-    }
-
-    // not exists — create via AJAX and use the returned customer (server also double-checks)
     modalFeedback.textContent = 'Creating member…';
     const created = await createCustomerServer(name, phone);
-    if (created && created.success) {
-      // server returns created: true/false and id, name
-      useCustomer(created.id, created.name, created.phone);
-      closeModal();
-      return;
-    } else {
-      modalFeedback.textContent = created.error || 'Failed to create member.';
-    }
+    if (created?.success) { useCustomer(created.id, created.name, created.phone); closeCustomerModal(); }
+    else modalFeedback.textContent = created?.error || 'Failed to create member.';
   });
 
-  // Create button (focus create inputs)
   modalCreateBtn.addEventListener('click', () => newMemberName.focus());
 
-  // Use selected customer: populate form & preview
-  function useCustomer(id, name, phone){
+  function useCustomer(id, name, phone) {
     selectedCustomerWrap.style.display = 'block';
     selectedCustomerName.textContent = name;
     selectedCustomerPhone.textContent = phone;
     selectedCustomerIdHidden.value = id || '';
     phoneDisplay.value = phone || '';
-    document.getElementById('id_name').value = name || '';
-    document.getElementById('id_name').readOnly = true;
-    document.getElementById('id_name').style.backgroundColor = '#f6f6f6';
+    nameField.value = name || '';
+    nameField.readOnly = true;
+    nameField.style.backgroundColor = '#f6f6f6';
     document.getElementById('new_phone').value = phone || '';
-    cancelCustomerBtn.style.display = 'inline-block';
   }
 
-//   document.getElementById('id_payment_method').addEventListener('change', function() {
-//     submitBtn.disabled = this.value === "" || parseInt(totalHidden.value) <= 0;
-//   });
-
-  // Cancel selected customer
   cancelCustomerBtn.addEventListener('click', () => {
     selectedCustomerWrap.style.display = 'none';
     selectedCustomerName.textContent = '';
     selectedCustomerPhone.textContent = '';
     selectedCustomerIdHidden.value = '';
     phoneDisplay.value = '';
-    document.getElementById('id_name').value = '';
-    document.getElementById('id_name').readOnly = false;
-    document.getElementById('id_name').style.backgroundColor = '';
+    nameField.value = '';
+    nameField.readOnly = false;
+    nameField.style.backgroundColor = '';
     document.getElementById('new_phone').value = '';
-    cancelCustomerBtn.style.display = 'none';
     if (window.PassportMode) window.PassportMode.exit();
   });
-  'use strict';
 
-// Helper: safe get element
-function $id(id) { return document.getElementById(id); }
+  /* Expose hooks for the Passport / QR scripts (defined in later IIFEs) */
+  window._updateOrderSubmitState = updateSubmitAvailability;
+  window._recalcCart = renderCart;
+  // Trim the cart down to a single cup (used when entering Passport mode).
+  window._enforcePassportSingleCup = function () {
+    if (cart.length === 0) return;
+    const first = cart[0];
+    first.qty = 1;
+    cart = [first];
+    renderCart();
+  };
 
-// Elements (may be null if template changed)
-const form = $id('orderForm');
-// const submitBtn = $id('submitBtn');
-const nameField = $id('id_name');
-const paymentField = $id('id_payment_method');
-// const totalHidden = $id('total_price_hidden');
-
-// if any required element missing, bail gracefully
-if (!form || !submitBtn) return;
-
-// Utility: trigger shake on an element
-function triggerShake(el) {
-  if (!el) return;
-  // remove class if exists to restart animation
-  el.classList.remove('shake');
-  el.classList.remove('shake--error');
-  // force reflow to restart animation
-  // eslint-disable-next-line no-unused-expressions
-  void el.offsetWidth;
-  el.classList.add('shake', 'shake--error');
-
-  // remove after animation ends so it can be retriggered later
-  function cleanup() {
-    el.classList.remove('shake');
-    el.classList.remove('shake--error');
-    el.removeEventListener('animationend', cleanup);
-  }
-  el.addEventListener('animationend', cleanup);
-}
-
-// Validate function — returns { ok: boolean, firstInvalid: DOMElement|null, message: string|null }
-function validateForm() {
-  const total = totalHidden ? parseInt(totalHidden.value || '0', 10) : 0;
-  const nameVal = nameField ? nameField.value.trim() : '';
-  const paymentVal = paymentField ? paymentField.value : '';
-
-  if (!nameVal) {
-    return { ok: false, firstInvalid: nameField, message: 'Customer name is required.' };
-  }
-  if (!paymentVal) {
-    return { ok: false, firstInvalid: paymentField, message: 'Please select a payment method.' };
-  }
-  if (total <= 0) {
-    return { ok: false, firstInvalid: null, message: 'Please add at least one item to the cart.' };
-  }
-  return { ok: true, firstInvalid: null, message: null };
-}
-
-// Update submit button enabled state (enable only when all fields ok)
-function updateSubmitAvailability() {
-  const total = totalHidden ? parseInt(totalHidden.value || '0', 10) : 0;
-  const nameOk = nameField ? nameField.value.trim() !== '' : true;
-  const paymentOk = paymentField ? paymentField.value !== '' : true;
-  const ready = nameOk && paymentOk && total > 0;
-  submitBtn.disabled = !ready;
-  submitBtn.style.opacity = ready ? '1' : '0.6';
-}
-
-// Wire listeners that can change validation state
-if (nameField) nameField.addEventListener('input', updateSubmitAvailability);
-if (paymentField) paymentField.addEventListener('change', updateSubmitAvailability);
-if (totalHidden) {
-  // if your code updates totalHidden via JS, ensure updateSubmitAvailability is called after
-  // We'll listen to DOMSubtreeModified as a last-resort fallback (not ideal but safe)
-  totalHidden.addEventListener('change', updateSubmitAvailability);
-}
-
-// Also call once at init
-updateSubmitAvailability();
-
-// On form submit: validate, shake, focus invalid
-form.addEventListener('submit', function (ev) {
-  const result = validateForm();
-  if (result.ok) {
-    // allow submit
-    return;
-  }
-
-  // prevent submission
-  ev.preventDefault();
-
-  // If there's a field to focus, focus it
-  if (result.firstInvalid && typeof result.firstInvalid.focus === 'function') {
-    // small visual cue: shake the submit button and focus the field
-    triggerShake(submitBtn);
-    // set a short timeout so user sees the shake first
-    setTimeout(function () {
-      result.firstInvalid.focus();
-    }, 150);
-  } else {
-    // nothing to focus (cart empty), shake the button
-    triggerShake(submitBtn);
-  }
-
-  // show friendly error (you can replace this with inline message later)
-  if (result.message) {
-    // use setTimeout so the alert doesn't interrupt the shake's initial visual
-    setTimeout(function () { alert(result.message); }, 220);
-  }
-}, { passive: false });
-
-// Also improve UX: when payment changes, update submit availability and remove any previous errors
-if (paymentField) {
-  paymentField.addEventListener('change', function () {
-    updateSubmitAvailability();
-  });
-}
-
-// If quantities change elsewhere in your JS, make sure updateSubmitAvailability() is called
-// For safety, expose it on window (so other scripts can call it)
-window._updateOrderSubmitState = updateSubmitAvailability;
-
-  // Prevent accidental number scroll changes
-  document.querySelectorAll('.smoothie-qty').forEach(input => {
-    input.addEventListener('wheel', (ev) => ev.target.blur());
-  });
+  /* initial render */
+  renderCart();
 
 })();
 </script>
@@ -993,8 +1091,7 @@ window._updateOrderSubmitState = updateSubmitAvailability;
 <!-- Payment lock + 1-cup limit for Shooties Passport mode -->
 <script>
 (function () {
-  const paySel   = document.getElementById('id_payment_method');
-  const menuList = document.getElementById('menuList');
+  const paySel = document.getElementById('id_payment_method');
 
   function passportOption() {
     if (!paySel) return null;
@@ -1018,38 +1115,9 @@ window._updateOrderSubmitState = updateSubmitAvailability;
     }
   }
 
-  function qtyInputs() {
-    return Array.from(document.querySelectorAll('.smoothie-qty'));
-  }
-
-  // Cap the whole order at exactly 1 cup: a new selection replaces the old.
-  function enforceSingleCup(changed) {
-    if (!window.__passportMode) return;
-    const inputs = qtyInputs();
-    const total = inputs.reduce((s, i) => s + (parseInt(i.value) || 0), 0);
-    if (total > 1) {
-      inputs.forEach(i => { if (i !== changed) i.value = 0; });
-      changed.value = 1;
-      if (window._recalcCart) window._recalcCart();
-    }
-  }
-
-  if (menuList) {
-    menuList.addEventListener('click', (e) => {
-      if (!window.__passportMode) return;
-      const incBtn = e.target.closest('.increase-btn');
-      if (incBtn) {
-        const input = incBtn.closest('.menu-item').querySelector('.smoothie-qty');
-        setTimeout(() => enforceSingleCup(input), 0);
-      }
-    });
-    menuList.addEventListener('input', (e) => {
-      if (!window.__passportMode) return;
-      if (e.target.matches('.smoothie-qty')) {
-        setTimeout(() => enforceSingleCup(e.target), 0);
-      }
-    });
-  }
+  // The cart (managed by the main IIFE) enforces the single-cup rule for us:
+  // while __passportMode is true, addToCart replaces the cart with one cup, and
+  // window._enforcePassportSingleCup trims any existing cart to a single cup.
 
   window.PassportMode = {
     enter() {
@@ -1059,12 +1127,7 @@ window._updateOrderSubmitState = updateSubmitAvailability;
       setRegularOptionsDisabled(true);
       paySel.dispatchEvent(new Event('change'));
       // Reduce any existing cart to a single cup.
-      let kept = false;
-      qtyInputs().forEach(i => {
-        const q = parseInt(i.value) || 0;
-        if (q > 0 && !kept) { i.value = 1; kept = true; } else { i.value = 0; }
-      });
-      if (window._recalcCart) window._recalcCart();
+      if (window._enforcePassportSingleCup) window._enforcePassportSingleCup();
     },
     exit() {
       window.__passportMode = false;
