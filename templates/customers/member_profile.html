@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load humanize %}
+{% load static %}
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -564,7 +565,7 @@
 <body>
 
   <div class="topbar">
-    <img class="brand-logo" src="/media/branding/shooties_logo.png" alt="Shooties">
+    <img class="brand-logo" src="{% static 'branding/shooties_logo.png' %}" alt="Shooties">
   </div>
 
   <div class="container">
@@ -625,12 +626,12 @@
       <div class="passport-grid">
         {% for slot, stamped in active_passport.stamp_range %}
           <div class="cup {% if stamped %}cup-stamped{% endif %}">
-            <img class="cup-img" src="/media/branding/shooties_cup.svg" alt="cup">
-            <img class="cup-stamp-mark" src="/media/branding/shooties_stamp.png" alt="">
+            <img class="cup-img" src="{% static 'branding/shooties_cup.svg' %}" alt="cup">
+            <img class="cup-stamp-mark" src="{% static 'branding/shooties_stamp.png' %}" alt="">
           </div>
         {% endfor %}
         <div class="cup cup-free {% if active_passport.can_claim %}cup-ready{% endif %}">
-          <img class="cup-img" src="/media/branding/shooties_cup.svg" alt="free cup">
+          <img class="cup-img" src="{% static 'branding/shooties_cup.svg' %}" alt="free cup">
           <span class="free-label">FREE!</span>
         </div>
       </div>
@@ -649,7 +650,7 @@
     <div class="share-wrap">
     <div class="share-card" id="shareCard">
       <div class="share-head">
-        <img src="/media/branding/shooties_logo.png" alt="Shooties" crossorigin="anonymous">
+        <img src="{% static 'branding/shooties_logo.png' %}" alt="Shooties" crossorigin="anonymous">
         <div class="sh-title">Shooties Wrapped</div>
       </div>
       <div class="share-name">
