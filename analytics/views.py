@@ -5,9 +5,9 @@ from datetime import datetime, date, time, timedelta
 import pytz
 
 from django.shortcuts import render
-from django.db.models import Sum
+from django.db.models import Sum, F, DecimalField
 from core.models import Store
-from sales.models import Order, OrderItem
+from sales.models import Order, OrderItem, OrderItemAddOn
 from inventory.models import SmoothieMenu, Ingredient, StockEntry
 from core.decorators import role_required
 from django.contrib.auth.decorators import login_required
@@ -152,6 +152,34 @@ def analytics_dashboard(request):
         })
 
 
+    # --- Add-on ranking (units sold & revenue) ---
+    addon_agg = (
+        OrderItemAddOn.objects
+        .filter(order_item__order_id__in=order_ids)
+        .values('addon__name')
+        .annotate(
+            units=Sum('order_item__quantity'),
+            revenue=Sum(
+                F('order_item__quantity') * F('addon__price'),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            ),
+        )
+        .order_by('-units')
+    )
+    addon_total_units = sum((a['units'] or 0) for a in addon_agg) or 1
+    addon_ranking = []
+    for i, a in enumerate(addon_agg, start=1):
+        units = a['units'] or 0
+        pct = (units / addon_total_units) * 100
+        addon_ranking.append({
+            'rank': i,
+            'name': a['addon__name'],
+            'units': units,
+            'revenue': a['revenue'] or 0,
+            'percentage': round(pct, 1),
+        })
+    total_addon_revenue = sum(a['revenue'] for a in addon_ranking)
+
     # --- JSON-encode lists for Chart.js usage in template ---
     ctx = {
         'menus': SmoothieMenu.objects.all(),
@@ -174,7 +202,9 @@ def analytics_dashboard(request):
         'total_sales' : total_sales,
         'total_cups' : total_cups,
         'menu_ranking': menu_ranking,
-        'payment_ranking': payment_ranking
+        'payment_ranking': payment_ranking,
+        'addon_ranking': addon_ranking,
+        'total_addon_revenue': total_addon_revenue,
     }
     return render(request, 'analytics/dashboard.html', ctx)
 

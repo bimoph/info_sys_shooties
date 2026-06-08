@@ -42,22 +42,24 @@ def view_order(request):
             "created_at__range": (start_of_day, end_of_day)
         }
 
+    _addon_prefetch = ('orderitem_set__smoothie', 'orderitem_set__addons__addon')
+
     pending_orders = Order.objects.filter(
         is_ready=False,
         is_served=False,
         **base_filter
-    ).order_by('created_at')
+    ).order_by('created_at').prefetch_related(*_addon_prefetch)
 
     ready_orders = Order.objects.filter(
         is_ready=True,
         is_served=False,
         **base_filter
-    ).order_by('ready_at')
+    ).order_by('ready_at').prefetch_related(*_addon_prefetch)
 
     served_orders = Order.objects.filter(
         is_served=True,
         **base_filter
-    ).order_by('served_at')
+    ).order_by('served_at').prefetch_related(*_addon_prefetch)
     # --- New: Aggregate pending quantities per menu ---
     pending_items_summary = (
         OrderItem.objects
