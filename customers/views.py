@@ -95,6 +95,27 @@ def customer_spending_report(request):
     })
 
 
+def member_lookup(request):
+    """Public landing at '/': a member enters their phone to reach their profile."""
+    error = None
+    phone_value = ''
+    if request.method == 'POST':
+        phone_value = request.POST.get('phone', '').strip()
+        if any(ch.isalpha() for ch in phone_value):
+            error = "Phone number must contain digits only (no letters)."
+        elif not normalize_phone(phone_value):
+            error = "Please enter your phone number."
+        else:
+            customer = find_customer_by_phone(phone_value)
+            if customer:
+                return redirect('member_profile', phone=customer.phone)
+            error = "No member found with that phone number. Please register first."
+    return render(request, 'customers/member_lookup.html', {
+        'error': error,
+        'phone_value': phone_value,
+    })
+
+
 def register_customer(request):
     already_registered = False
     existing_customer = None

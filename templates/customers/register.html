@@ -210,8 +210,9 @@
       <div class="form-group">
         <label for="id_phone">Phone Number</label>
         <input type="tel" name="phone" id="id_phone" placeholder="e.g. 08123456789"
-               value="{{ form.phone.value|default:'' }}" autocomplete="tel">
-        <div class="field-hint">We use this as your unique member ID.</div>
+               value="{{ form.phone.value|default:'' }}" autocomplete="tel"
+               inputmode="numeric" pattern="[0-9+\-\s]*">
+        <div class="field-hint">Digits only — we use this as your unique member ID.</div>
         {% if form.phone.errors %}
           <div class="field-error">{{ form.phone.errors.0 }}</div>
         {% endif %}
@@ -221,9 +222,32 @@
         {% if already_registered %}Check Again{% else %}Register Now →{% endif %}
       </button>
     </form>
+
+    {% if already_registered %}
+    <a href="{% url 'member_profile' existing_customer.phone %}" class="member-link" style="display:block;text-align:center;margin-top:16px;font-size:14px;font-weight:700;color:#ff6000;text-decoration:none;">
+      View my member profile →
+    </a>
+    {% endif %}
+
+    <div class="member-cta" style="text-align:center;margin-top:18px;padding-top:18px;border-top:1px solid #f0f0f0;font-size:13px;color:#888;">
+      Already a member?
+      <a href="{% url 'member_lookup' %}" style="color:#ff6000;font-weight:700;text-decoration:none;">Enter your phone →</a>
+    </div>
   </div>
 
   <div class="footer-note">By registering you agree to let us remember your orders 🍊</div>
+
+  <script>
+    // Phone field: allow digits and common phone punctuation only — strip letters.
+    (function () {
+      var phone = document.getElementById('id_phone');
+      if (!phone) return;
+      phone.addEventListener('input', function () {
+        var cleaned = this.value.replace(/[^0-9+\-\s]/g, '');
+        if (cleaned !== this.value) this.value = cleaned;
+      });
+    })();
+  </script>
 
 </body>
 </html>
