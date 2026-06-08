@@ -200,6 +200,22 @@
             </ol>
         </section>
 
+        <section class="chart-box" aria-label="Add-on sales ranking">
+            <p style="font-weight: 600; margin-bottom: 8px;">Add-on Sales</p>
+            <p style="margin-bottom: 8px;">
+                Total Add-on Revenue: Rp {{ total_addon_revenue|floatformat:0|intcomma }}
+            </p>
+            {% if addon_ranking %}
+            <ol>
+                {% for a in addon_ranking %}
+                <li>{{ a.name }}: {{ a.units }} sold (Rp {{ a.revenue|floatformat:0|intcomma }}), {{ a.percentage }}%</li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <p style="color:#888;">No add-ons sold in this period.</p>
+            {% endif %}
+        </section>
+
         <section class="chart-box" aria-label="Cups sold by time division bar chart" style="grid-column: 1 / -1;">
             <canvas id="divisionChart" role="img" aria-describedby="divisionChartDesc"></canvas>
             <p id="divisionChartDesc" class="visually-hidden">Bar chart showing cups sold by time division.</p>

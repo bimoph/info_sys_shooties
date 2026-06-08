@@ -23,41 +23,41 @@ from customers.utils import find_customer_by_phone, normalize_phone  # import he
 
 @login_required
 def view_order(request):
-    # Get Jakarta timezone
-    jakarta_tz = pytz.timezone("Asia/Jakarta")
-    now_jakarta = timezone.now().astimezone(jakarta_tz)
+    # Today's date in the project timezone (Asia/Jakarta).
+    # Using __date with timezone.localdate() avoids the pytz LMT-offset bug that
+    # datetime.replace(tzinfo=pytz_zone) introduces (it yields +07:07, not +07:00),
+    # which was hiding orders created near midnight.
+    today = timezone.localdate()
 
-    # Start & end of today in Jakarta time
-    start_of_day = datetime.combine(now_jakarta.date(), time.min).replace(tzinfo=jakarta_tz)
-    end_of_day = datetime.combine(now_jakarta.date(), time.max).replace(tzinfo=jakarta_tz)
-    print(request.user.role)
     # If user is Admin → do NOT filter by store
     if request.user.role == "admin":
         base_filter = {
-            "created_at__range": (start_of_day, end_of_day)
+            "created_at__date": today
         }
     else:
         base_filter = {
             "store": request.user.store,
-            "created_at__range": (start_of_day, end_of_day)
+            "created_at__date": today
         }
+
+    _addon_prefetch = ('orderitem_set__smoothie', 'orderitem_set__addons__addon')
 
     pending_orders = Order.objects.filter(
         is_ready=False,
         is_served=False,
         **base_filter
-    ).order_by('created_at')
+    ).order_by('created_at').prefetch_related(*_addon_prefetch)
 
     ready_orders = Order.objects.filter(
         is_ready=True,
         is_served=False,
         **base_filter
-    ).order_by('ready_at')
+    ).order_by('ready_at').prefetch_related(*_addon_prefetch)
 
     served_orders = Order.objects.filter(
         is_served=True,
         **base_filter
-    ).order_by('served_at')
+    ).order_by('served_at').prefetch_related(*_addon_prefetch)
     # --- New: Aggregate pending quantities per menu ---
     pending_items_summary = (
         OrderItem.objects

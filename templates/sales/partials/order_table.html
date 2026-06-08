@@ -27,7 +27,16 @@
         <td>
             <ul class="menu-list">
                 {% for item in order.orderitem_set.all %}
-                <li>{{ item.smoothie.name }} × {{ item.quantity }}</li>
+                <li>
+                    {{ item.smoothie.name }} × {{ item.quantity }}
+                    {% if item.addons.all %}
+                    <ul class="addon-list" style="margin:2px 0 0 14px; padding:0; list-style:none;">
+                        {% for oa in item.addons.all %}
+                        <li style="font-size:12px; color:#007bff;">+ {{ oa.addon.name }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
                 {% endfor %}
             </ul>
         </td>

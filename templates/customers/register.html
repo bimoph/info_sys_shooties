@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,16 +25,12 @@
       margin-bottom: 32px;
     }
     .brand-logo {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #ff8c00, #ff6000);
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      display: block;
       margin: 0 auto 12px;
-      box-shadow: 0 4px 16px rgba(255, 140, 0, 0.25);
+      filter: drop-shadow(0 4px 12px rgba(255, 140, 0, 0.20));
     }
     .brand-name {
       font-size: 26px;
@@ -172,7 +169,7 @@
 <body>
 
   <div class="brand">
-    <div class="brand-logo">🥤</div>
+    <img class="brand-logo" src="{% static 'branding/shooties_logo.png' %}" alt="Shooties">
     <div class="brand-name">Shooties</div>
     <div class="brand-tagline">Fresh blends, every day</div>
   </div>
